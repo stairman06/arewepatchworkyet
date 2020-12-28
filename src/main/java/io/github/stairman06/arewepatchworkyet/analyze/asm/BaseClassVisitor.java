@@ -101,7 +101,7 @@ public class BaseClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         for (String className : classesToApply) {
-            Analyzer.implementedMethods.get(className).add(new Method(name,descriptor));
+            Analyzer.implementedMethods.get(className).add(new Method(name, descriptor, className));
         }
 
         return super.visitMethod(access, name, descriptor, signature, exceptions);

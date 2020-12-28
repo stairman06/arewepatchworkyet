@@ -1,5 +1,7 @@
 package io.github.stairman06.arewepatchworkyet.ui;
 
+import io.github.stairman06.arewepatchworkyet.AreWePatchworkYetGui;
+import io.github.stairman06.arewepatchworkyet.MappingUtils;
 import io.github.stairman06.arewepatchworkyet.analyze.Method;
 
 import javax.swing.*;
@@ -40,6 +42,8 @@ public class ResultListItemCellRenderer extends JButton implements ListCellRende
 
     @Override
     public Component getListCellRendererComponent(JList<? extends ResultListItem> list, ResultListItem item, int index, boolean isSelected, boolean cellHasFocus) {
+        String mappings = AreWePatchworkYetGui.getCurrentMappings();
+
         if(isSelected) {
             setBackground(Color.LIGHT_GRAY);
         } else {
@@ -48,10 +52,18 @@ public class ResultListItemCellRenderer extends JButton implements ListCellRende
 
         ResultListItem.Type type = item.getType();
         if(type == ResultListItem.Type.CLASS) {
-            setText((String) item.getObject());
+            String className = (String) item.getObject();
+            if(AreWePatchworkYetGui.getCurrentMappings().equals("yarn")) {
+                className = MappingUtils.getYarnClassName(className);
+            }
+            setText(className);
         } else if (type == ResultListItem.Type.METHOD) {
             Method method = (Method) item.getObject();
-            setText("        " + method.name + method.descriptor);
+            String descriptorName = method.descriptor;
+            if(AreWePatchworkYetGui.getCurrentMappings().equals("yarn")) {
+                descriptorName = MappingUtils.remapDescriptorToYarn(descriptorName);
+            }
+            setText("        " + method.name + descriptorName);
         }
 
         return this;

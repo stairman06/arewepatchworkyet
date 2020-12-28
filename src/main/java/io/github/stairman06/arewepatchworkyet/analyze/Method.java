@@ -3,9 +3,11 @@ package io.github.stairman06.arewepatchworkyet.analyze;
 public class Method implements Comparable {
     public String name;
     public String descriptor;
-    public Method(String name, String descriptor) {
+    public String ownerClass;
+    public Method(String name, String descriptor, String owner) {
         this.name = name;
         this.descriptor = descriptor;
+        this.ownerClass = owner;
     }
 
     @Override

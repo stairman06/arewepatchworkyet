@@ -44,7 +44,7 @@ public class Analyzer {
         if(!exists) {
             // The method does not exist in the target owner,
             // so we need to add it to neededMethods
-            addNeededMethod(owner, new Method(name, descriptor));
+            addNeededMethod(owner, new Method(name, descriptor, owner));
         }
     }
 

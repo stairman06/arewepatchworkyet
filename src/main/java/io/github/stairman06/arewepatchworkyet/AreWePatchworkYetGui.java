@@ -9,6 +9,7 @@ import net.fabricmc.mapping.tree.TinyTree;
 import org.apache.commons.io.FileUtils;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -20,12 +21,13 @@ import java.util.TreeSet;
 
 public class AreWePatchworkYetGui {
     private static final String[] MINECRAFT_VERSIONS = new String[] { "1.16.4" };
+    private static final String[] MAPPINGS_LIST = new String[] { "intermediary", "yarn" };
 
     private static JComboBox<String> minecraftVersionBox;
+    private static JComboBox<String> mappingsBox;
     private static JTextField inputModTextField;
     private static JTextField apiJarTextField;
-    private static JPanel methodInfoPanel;
-    private static Method selectedMethod;
+    private static JPanel inspectionPanel;
     private static DefaultListModel<ResultListItem> listModel = new DefaultListModel<>();
 
 
@@ -121,6 +123,31 @@ public class AreWePatchworkYetGui {
                 configPanel.add(apiJarPanel);
             }
 
+            // Mappings Dropdown
+            {
+                JPanel mappingsPanel = new JPanel();
+                mappingsPanel.setLayout(new BoxLayout(mappingsPanel, BoxLayout.X_AXIS));
+                AreWePatchworkYetGui.mappingsBox = new JComboBox<>(MAPPINGS_LIST);
+                AreWePatchworkYetGui.mappingsBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+                AreWePatchworkYetGui.mappingsBox.addActionListener(e -> {
+                    String selected = (String) AreWePatchworkYetGui.mappingsBox.getSelectedItem();
+                    if(selected.equals("yarn")) {
+                        try {
+                            MappingUtils.downloadYarnIfNeeded((String) AreWePatchworkYetGui.minecraftVersionBox.getSelectedItem());
+                        } catch (Exception exception) {
+                            exception.printStackTrace();
+                        }
+                    }
+
+                    AreWePatchworkYetGui.renderNeededMethods();
+                });
+
+                mappingsPanel.add(new JLabel("Mappings to display in:"));
+                mappingsPanel.add(AreWePatchworkYetGui.mappingsBox);
+                mappingsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+                configPanel.add(mappingsPanel);
+            }
+
             // Analyze Button
             {
                 JButton analyzeButton = new JButton("Analyze");
@@ -171,7 +198,9 @@ public class AreWePatchworkYetGui {
                         if(list.getSelectedValue() != null) {
                             ResultListItem selectedItem = list.getSelectedValue();
                             if(selectedItem.getType() == ResultListItem.Type.METHOD) {
-                                updateMethod((Method) selectedItem.getObject());
+                                inspectMethod((Method) selectedItem.getObject());
+                            }else if(selectedItem.getType() == ResultListItem.Type.CLASS) {
+                                inspectClass((String) selectedItem.getObject());
                             }
                         }
                     }
@@ -191,16 +220,17 @@ public class AreWePatchworkYetGui {
             c.gridx = 2;
             c.weightx = 0.4;
 
-            JPanel methodInfoPanel = new JPanel();
-            methodInfoPanel.setLayout(new BoxLayout(methodInfoPanel, BoxLayout.Y_AXIS));
-            methodInfoPanel.setMinimumSize(new Dimension(200, 0));
+            JPanel inspectionPanel = new JPanel();
+            inspectionPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+            inspectionPanel.setLayout(new BoxLayout(inspectionPanel, BoxLayout.Y_AXIS));
+            inspectionPanel.setMinimumSize(new Dimension(200, 0));
 
             JLabel selectALabel = new JLabel("Select a method or class");
-            methodInfoPanel.add(selectALabel);
+            inspectionPanel.add(selectALabel);
 
-            containerPanel.add(methodInfoPanel, c);
+            containerPanel.add(inspectionPanel, c);
 
-            AreWePatchworkYetGui.methodInfoPanel = methodInfoPanel;
+            AreWePatchworkYetGui.inspectionPanel = inspectionPanel;
         }
 
         frame.add(containerPanel);
@@ -222,18 +252,44 @@ public class AreWePatchworkYetGui {
         }
     }
 
-    public static void updateMethod(Method newMethod) {
-        AreWePatchworkYetGui.methodInfoPanel.removeAll();
+    public static void inspectClass(String owner) {
+        AreWePatchworkYetGui.inspectionPanel.removeAll();
 
+        updateClass(owner);
+
+        AreWePatchworkYetGui.inspectionPanel.updateUI();
+    }
+
+    public static void updateClass(String owner) {
+        {
+            JLabel label = new JLabel("Selected Class");
+            label.setFont(label.getFont().deriveFont(13f));
+            AreWePatchworkYetGui.inspectionPanel.add(label);
+        }
+
+        {
+            JLabel label = new JLabel(owner);
+            AreWePatchworkYetGui.inspectionPanel.add(label);
+        }
+    }
+
+    public static void inspectMethod(Method newMethod) {
+        AreWePatchworkYetGui.inspectionPanel.removeAll();
+
+        updateClass(newMethod.ownerClass);
         {
             JLabel label = new JLabel("Selected Method");
             label.setFont(label.getFont().deriveFont(13f));
             label.setAlignmentY(Component.TOP_ALIGNMENT);
 
-            AreWePatchworkYetGui.methodInfoPanel.add(label);
+            AreWePatchworkYetGui.inspectionPanel.add(label);
         }
-        JLabel label = new JLabel(newMethod.name);
-        AreWePatchworkYetGui.methodInfoPanel.add(label);
-        AreWePatchworkYetGui.methodInfoPanel.updateUI();
+        JLabel label = new JLabel(newMethod.name + newMethod.descriptor);
+        AreWePatchworkYetGui.inspectionPanel.add(label);
+        AreWePatchworkYetGui.inspectionPanel.updateUI();
+    }
+
+    public static String getCurrentMappings() {
+        return (String) AreWePatchworkYetGui.mappingsBox.getSelectedItem();
     }
 }
