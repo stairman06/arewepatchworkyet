@@ -1,0 +1,8 @@
+*.jar
+*.tiny
+!gradle/wrapper/*.jar
+temp/
+data/
+build/
+.idea/
+.gradle/
