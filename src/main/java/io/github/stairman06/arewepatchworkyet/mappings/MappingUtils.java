@@ -64,9 +64,14 @@ public class MappingUtils {
         return intermediary;
     }
 
-    public static String remapDescriptorToYarn(String descriptor) {
+    public static String remapMethodDescriptorToYarn(String descriptor) {
         AsmRemapper remapper = new AsmRemapper();
         return remapper.mapMethodDesc(descriptor);
+    }
+
+    public static String remapFieldDescriptorToYarn(String descriptor) {
+        AsmRemapper remapper = new AsmRemapper();
+        return remapper.mapDesc(descriptor);
     }
 
     /**
@@ -89,9 +94,17 @@ public class MappingUtils {
      * @param rawDescriptor Raw descriptor, probably in intermediary mappings
      * @return A mapped descriptor if the user has selected to view it
      */
-    public static String getDescriptor(String rawDescriptor) {
+    public static String getMethodDescriptor(String rawDescriptor) {
         if (AreWePatchworkYetGui.getCurrentMappings().equals("yarn")) {
-            return MappingUtils.remapDescriptorToYarn(rawDescriptor);
+            return MappingUtils.remapMethodDescriptorToYarn(rawDescriptor);
+        }
+
+        return rawDescriptor;
+    }
+
+    public static String getFieldDescriptor(String rawDescriptor) {
+        if (AreWePatchworkYetGui.getCurrentMappings().equals("yarn")) {
+            return MappingUtils.remapFieldDescriptorToYarn(rawDescriptor);
         }
 
         return rawDescriptor;

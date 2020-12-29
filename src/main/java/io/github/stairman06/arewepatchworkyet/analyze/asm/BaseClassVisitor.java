@@ -1,9 +1,10 @@
 package io.github.stairman06.arewepatchworkyet.analyze.asm;
 
 import io.github.stairman06.arewepatchworkyet.analyze.Analyzer;
-import io.github.stairman06.arewepatchworkyet.analyze.Method;
+import io.github.stairman06.arewepatchworkyet.analyze.ClassMember;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -13,7 +14,7 @@ import java.util.HashSet;
 
 /**
  * This visits every class defined.
- * It writes all defined methods to {@link Analyzer#implementedMethods}
+ * It writes all defined methods to {@link Analyzer#implementedClassMembers}
  */
 public class BaseClassVisitor extends ClassVisitor {
     // Array containing each class that the methods defined here need to be "applied" to
@@ -40,7 +41,7 @@ public class BaseClassVisitor extends ClassVisitor {
 
     private void addImplementedSet() {
         for (String className : classesToApply) {
-            Analyzer.implementedMethods.putIfAbsent(className, new HashSet<>());
+            Analyzer.implementedClassMembers.putIfAbsent(className, new HashSet<>());
         }
     }
 
@@ -61,9 +62,17 @@ public class BaseClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         for (String className : classesToApply) {
-            Analyzer.implementedMethods.get(className).add(new Method(name, descriptor, className, null));
+            Analyzer.implementedClassMembers.get(className).add(new ClassMember(ClassMember.Type.METHOD, name, descriptor, className, null));
         }
 
         return super.visitMethod(access, name, descriptor, signature, exceptions);
+    }
+
+    @Override
+    public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+        for (String className : classesToApply) {
+            Analyzer.implementedClassMembers.get(className).add(new ClassMember(ClassMember.Type.FIELD, name, descriptor, className, null));
+        }
+        return super.visitField(access, name, descriptor, signature, value);
     }
 }

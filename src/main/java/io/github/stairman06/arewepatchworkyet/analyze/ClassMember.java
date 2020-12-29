@@ -1,12 +1,19 @@
 package io.github.stairman06.arewepatchworkyet.analyze;
 
-public class Method implements Comparable<Method> {
+public class ClassMember implements Comparable<ClassMember> {
     public String name;
     public String descriptor;
     public String ownerClass;
     public String caller;
+    public Type type;
 
-    public Method(String name, String descriptor, String owner, String caller) {
+    public enum Type {
+        METHOD,
+        FIELD
+    }
+
+    public ClassMember(Type type, String name, String descriptor, String owner, String caller) {
+        this.type = type;
         this.name = name;
         this.descriptor = descriptor;
         this.ownerClass = owner;
@@ -15,8 +22,8 @@ public class Method implements Comparable<Method> {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Method) {
-            return ((Method) obj).name.equals(this.name) && ((Method) obj).descriptor.equals(this.descriptor);
+        if (obj instanceof ClassMember) {
+            return ((ClassMember) obj).name.equals(this.name) && ((ClassMember) obj).descriptor.equals(this.descriptor);
         } else {
             return false;
         }
@@ -28,8 +35,8 @@ public class Method implements Comparable<Method> {
     }
 
     @Override
-    public int compareTo(Method o) {
+    public int compareTo(ClassMember o) {
         // Sorted by method name
-        return this.name.compareTo(((Method) o).name);
+        return this.name.compareTo(((ClassMember) o).name);
     }
 }

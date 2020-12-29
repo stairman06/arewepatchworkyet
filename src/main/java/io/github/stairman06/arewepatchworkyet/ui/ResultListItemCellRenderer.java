@@ -1,6 +1,6 @@
 package io.github.stairman06.arewepatchworkyet.ui;
 
-import io.github.stairman06.arewepatchworkyet.analyze.Method;
+import io.github.stairman06.arewepatchworkyet.analyze.ClassMember;
 import io.github.stairman06.arewepatchworkyet.mappings.MappingUtils;
 
 import javax.swing.*;
@@ -46,9 +46,14 @@ public class ResultListItemCellRenderer extends JButton implements ListCellRende
         ResultListItem.Type type = item.getType();
         if (type == ResultListItem.Type.CLASS) {
             setText(MappingUtils.getClassName((String) item.getObject()));
-        } else if (type == ResultListItem.Type.METHOD) {
-            Method method = (Method) item.getObject();
-            setText("        " + method.name + MappingUtils.getDescriptor(method.descriptor));
+        } else if (type == ResultListItem.Type.CLASS_MEMBER) {
+            ClassMember classMember = (ClassMember) item.getObject();
+
+            if (classMember.type == ClassMember.Type.METHOD) {
+                setText("      M " + classMember.name + MappingUtils.getMethodDescriptor(classMember.descriptor));
+            } else if (classMember.type == ClassMember.Type.FIELD) {
+                setText("      F " + MappingUtils.getFieldDescriptor(classMember.descriptor) + " " + classMember.name);
+            }
         }
 
         return this;

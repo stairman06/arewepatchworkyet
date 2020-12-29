@@ -1,7 +1,7 @@
 # AreWePatchworkYet?
-**AreWePatchworkYet?** is a tool that takes a Forge mod jar file, and lists unimplemented methods based on an inputted Patchwork API jar file. It's designed to see which methods need to be implemented in Patchwork API for a mod to work.
+**AreWePatchworkYet?** is a tool that takes a Forge mod jar file, and lists unimplemented fields and methods based on an inputted Patchwork API jar file. It's designed to see which methods need to be implemented in Patchwork API for a mod to work.
 
-Note that results provided by this tool are not guaranteed - there may be unimplemented methods it may miss, or other things a mod will require such as AT/AWs, coremods, or specific field access.
+Note that results provided by this tool are not guaranteed - there may be unimplemented fields/methods it may miss, or other things a mod will require such as AT/AWs or coremods.
 
 ## Setup
 At the moment, prebuilt binaries are not available. You'll need to clone this repo and build it manually, assuming you have a JDK installed. If you don't have a JDK, grab one from [AdoptOpenJDK](https://adoptopenjdk.net/).
@@ -39,11 +39,11 @@ When you've configured all settings, press *Analyze*, and the mod jar will be an
 ## Technical Details
 AreWePatchworkYet? works using the [ASM](https://asm.ow2.io/) bytecode analysis library.
  
-First, it looks through the Minecraft and Patchwork API jars to see which methods are defined, and stores them in an internal map.
+First, it looks through the Minecraft and Patchwork API jars to see which fields/methods are defined, and stores them in an internal map.
 
-Second, it looks through the input mod jar to see which methods are referenced. If a method is referenced that isn't defined, its stored to be displayed for later.
+Second, it looks through the input mod jar to see which methods are referenced. If a field or method is referenced that isn't defined, its stored to be displayed for later.
 
-AreWePatchworkYet? also handles Mixin classes that add methods, by looking for the `@org/spongepowered/asm/mixin/Mixin` annotation, and storing the added methods.
+AreWePatchworkYet? also handles Mixin classes that add methods, by looking for the `@org/spongepowered/asm/mixin/Mixin` annotation, and storing the added fields or methods.
 
 ## License
 This tool is licensed under the [GNU Lesser General Public License version 3.0](https://www.gnu.org/licenses/lgpl-3.0.html).

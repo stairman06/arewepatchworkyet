@@ -16,17 +16,17 @@ public class Analyzer {
     public static HashSet<String> implementedClasses = new HashSet<>();
 
     /**
-     * Contains methods that are known to be implemented.
-     * The key is the class which implements it, the value is a HashSet containing {@link Method}
+     * Contains class members that are known to be implemented.
+     * The key is the class which implements it, the value is a HashSet containing {@link ClassMember}
      */
-    public static HashMap<String, HashSet<Method>> implementedMethods = new HashMap<>();
+    public static HashMap<String, HashSet<ClassMember>> implementedClassMembers = new HashMap<>();
 
     /**
      * Contains methods that are known to be needed.
-     * The key is the class which contains the method, the value is a TreeSet containing {@link Method}
+     * The key is the class which contains the method, the value is a TreeSet containing {@link ClassMember}
      * The reason for TreeSet is alphabetical ordering
      */
-    public static HashMap<String, TreeSet<Method>> neededMethods = new HashMap<>();
+    public static HashMap<String, TreeSet<ClassMember>> neededClassMembers = new HashMap<>();
 
     /**
      * Stores a list of defined classes and their respective superclasses.
@@ -35,13 +35,13 @@ public class Analyzer {
     public static HashMap<String, HashSet<String>> superCache = new HashMap<>();
 
     /**
-     * Analyze a method name, and add it to {@literal neededMethods} if needed.
+     * Analyze a class member, and add it to {@literal neededMethods} if needed.
      *
      * @param owner      The owner of this method
      * @param name       The name of this method
      * @param descriptor THe descriptor of this method
      */
-    public static void analyzeMethodName(String owner, String name, String descriptor, String caller) {
+    public static void analyzeClassMember(ClassMember.Type type, String owner, String name, String descriptor, String caller) {
         if (owner.startsWith("[L")) { // If this is an array, trim off the array indicator
             owner = owner.substring(2);
         }
@@ -67,7 +67,7 @@ public class Analyzer {
         if (!exists) {
             // The method does not exist in the target owner,
             // so we need to add it to neededMethods
-            addNeededMethod(owner, new Method(name, descriptor, owner, caller));
+            addNeededClassMember(owner, new ClassMember(type, name, descriptor, owner, caller));
         }
     }
 
@@ -75,14 +75,14 @@ public class Analyzer {
      * Adds a method to {@literal neededMethods}, and creates the TreeSet if needed
      *
      * @param owner  Owner of the method
-     * @param method Instance of {@link Method}
+     * @param classMember Instance of {@link ClassMember}
      */
-    private static void addNeededMethod(String owner, Method method) {
-        if (!neededMethods.containsKey(owner)) {
-            neededMethods.put(owner, new TreeSet<>());
+    private static void addNeededClassMember(String owner, ClassMember classMember) {
+        if (!neededClassMembers.containsKey(owner)) {
+            neededClassMembers.put(owner, new TreeSet<>());
         }
 
-        neededMethods.get(owner).add(method);
+        neededClassMembers.get(owner).add(classMember);
     }
 
 
@@ -112,15 +112,15 @@ public class Analyzer {
             return false;
         }
 
-        // Skips intermediary method_ names, which are Minecraft methods
+        // Skips intermediary method_ and field_ names, which are Minecraft methods and fields
         // This isn't really a good idea and should be replaced with a proper check for Minecraft classes sometime
-        if (name.startsWith("method_")) {
+        if (name.startsWith("method_") || name.startsWith("field_")) {
             return true;
         }
 
         // Loop through implemented methods to see if it exists
-        for (Method method : implementedMethods.getOrDefault(owner, new HashSet<>())) {
-            if (method.name.equals(name) && method.descriptor.equals(descriptor)) {
+        for (ClassMember classMember : implementedClassMembers.getOrDefault(owner, new HashSet<>())) {
+            if (classMember.name.equals(name) && classMember.descriptor.equals(descriptor)) {
                 return true;
             }
         }

@@ -1,7 +1,7 @@
 package io.github.stairman06.arewepatchworkyet;
 
 import io.github.stairman06.arewepatchworkyet.analyze.Analyzer;
-import io.github.stairman06.arewepatchworkyet.analyze.Method;
+import io.github.stairman06.arewepatchworkyet.analyze.ClassMember;
 import io.github.stairman06.arewepatchworkyet.mappings.MappingUtils;
 import io.github.stairman06.arewepatchworkyet.ui.ResultListItem;
 import io.github.stairman06.arewepatchworkyet.ui.ResultListItemCellRenderer;
@@ -211,10 +211,10 @@ public class AreWePatchworkYetGui {
                     public void mouseClicked(MouseEvent e) {
                         if (list.getSelectedValue() != null) {
                             ResultListItem selectedItem = list.getSelectedValue();
-                            if (selectedItem.getType() == ResultListItem.Type.METHOD) {
-                                inspectMethod((Method) selectedItem.getObject());
-                            } else if (selectedItem.getType() == ResultListItem.Type.CLASS) {
+                            if (selectedItem.getType() == ResultListItem.Type.CLASS) {
                                 inspectClass((String) selectedItem.getObject());
+                            } else {
+                                inspectClassMember((ClassMember) selectedItem.getObject());
                             }
                         }
                     }
@@ -259,25 +259,25 @@ public class AreWePatchworkYetGui {
     }
 
     public static void renderNeededMethods(String searchTerm) {
-        int methodCount = 0;
+        int neededCount = 0;
 
         listModel.clear();
-        for (Map.Entry<String, TreeSet<Method>> entry : Analyzer.neededMethods.entrySet()) {
+        for (Map.Entry<String, TreeSet<ClassMember>> entry : Analyzer.neededClassMembers.entrySet()) {
             ResultListItem item = new ResultListItem(ResultListItem.Type.CLASS, entry.getKey());
 
             String keyName = MappingUtils.getClassName(entry.getKey());
             if (keyName.toLowerCase().contains(searchTerm.trim().toLowerCase()) || searchTerm.trim().isEmpty()) {
                 listModel.addElement(item);
 
-                for (Method method : entry.getValue()) {
-                    methodCount++;
-                    ResultListItem methodItem = new ResultListItem(ResultListItem.Type.METHOD, method);
-                    listModel.addElement(methodItem);
+                for (ClassMember classMember : entry.getValue()) {
+                    neededCount++;
+                    ResultListItem memberItem = new ResultListItem(ResultListItem.Type.CLASS_MEMBER, classMember);
+                    listModel.addElement(memberItem);
                 }
             }
         }
 
-        System.out.println("Result method count: " + methodCount);
+        System.out.println("Result count: " + neededCount);
     }
 
     public static void inspectClass(String owner) {
@@ -352,12 +352,23 @@ public class AreWePatchworkYetGui {
         }
     }
 
-    public static void inspectMethod(Method newMethod) {
+    private static String removeSubclassIfNeeded(String className) {
+        return className.split("\\$")[0];
+    }
+
+    public static void inspectClassMember(ClassMember newClassMember) {
         inspectionPanel.removeAll();
 
-        updateClass(newMethod.ownerClass);
+        updateClass(newClassMember.ownerClass);
         {
-            JLabel label = new JLabel("Selected Method");
+            String labelText;
+            if (newClassMember.type == ClassMember.Type.FIELD) {
+                labelText = "Selected Field";
+            } else {
+                labelText = "Selected Method";
+            }
+
+            JLabel label = new JLabel(labelText);
             label.setBorder(new EmptyBorder(20, 0, 0, 0));
             label.setFont(label.getFont().deriveFont(13f));
             label.setAlignmentY(Component.TOP_ALIGNMENT);
@@ -365,36 +376,50 @@ public class AreWePatchworkYetGui {
             inspectionPanel.add(label);
         }
 
-        {
-            JLabel label = new JLabel(newMethod.name + MappingUtils.getDescriptor(newMethod.descriptor));
+        if (newClassMember.type == ClassMember.Type.METHOD) {
+            JLabel label = new JLabel(newClassMember.name + MappingUtils.getMethodDescriptor(newClassMember.descriptor));
+            inspectionPanel.add(label);
+        } else if (newClassMember.type == ClassMember.Type.FIELD) {
+            JLabel label = new JLabel(MappingUtils.getFieldDescriptor(newClassMember.descriptor) + " " + newClassMember.name);
             inspectionPanel.add(label);
         }
 
         {
-            if (newMethod.caller != null) {
-                JLabel label = new JLabel("Called by:");
+            if (newClassMember.caller != null) {
+                JLabel label = new JLabel(newClassMember.type == ClassMember.Type.METHOD ? "Called" : "Accessed" + " by: ");
                 inspectionPanel.add(label);
 
-                JLabel label2 = new JLabel(MappingUtils.getClassName(newMethod.caller));
+                JLabel label2 = new JLabel(MappingUtils.getClassName(newClassMember.caller));
                 inspectionPanel.add(label2);
             }
         }
 
         {
-            if (newMethod.ownerClass.startsWith("net/minecraftforge/")) {
-                JButton viewForge = new JButton("View source (YarnForge)");
-                viewForge.addActionListener(e -> {
-                    openURI("https://github.com/PatchworkMC/YarnForge/blob/target-applied/src/main/java/" + newMethod.ownerClass + ".java");
+            if (newClassMember.ownerClass.startsWith("net/minecraftforge/")) {
+                JButton viewYarnForge = new JButton("View source (YarnForge)");
+                viewYarnForge.addActionListener(e -> {
+                    openURI("https://github.com/PatchworkMC/YarnForge/blob/target-applied/src/main/java/" + removeSubclassIfNeeded(newClassMember.ownerClass) + ".java");
                 });
 
-                inspectionPanel.add(viewForge);
+                inspectionPanel.add(viewYarnForge);
+
+                JButton viewForgeUpstream = new JButton("View source (Forge Upstream)");
+                viewForgeUpstream.addActionListener(e -> {
+                    // TODO: un-hardcode 1.16.x
+                    openURI("https://github.com/MinecraftForge/MinecraftForge/blob/1.16.x/src/main/java/" + removeSubclassIfNeeded(newClassMember.ownerClass) + ".java");
+                });
+
+                inspectionPanel.add(viewForgeUpstream);
             }
 
-            if (newMethod.ownerClass.startsWith("net/minecraft/")) {
-                if (newMethod.name.equals("<init>")) {
+            if (newClassMember.ownerClass.startsWith("net/minecraft/")) {
+                if (newClassMember.name.equals("<init>")) {
                     showImplementationTip("This looks like a Forge-added constructor. You'll need to redirect this to a custom class in Patcher.");
-                } else {
+                } else if (newClassMember.type == ClassMember.Type.METHOD ) {
                     showImplementationTip("It looks like Forge is adding a method to this Minecraft class. You'll need to create a duck interface, mixin to the Minecraft class, and implement the interface.");
+                } else if (newClassMember.type == ClassMember.Type.FIELD) {
+                    // TODO: auto recognize public static fields
+                    showImplementationTip("It looks like Forge is adding a field to this Minecraft class. If this is a public static field, you'll need to redirect it with Patcher.");
                 }
 
                 {
@@ -405,7 +430,7 @@ public class AreWePatchworkYetGui {
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
-                        openURI("https://github.com/PatchworkMC/YarnForge/blob/target-applied/patches/minecraft/" + MappingUtils.getYarnClassName(newMethod.ownerClass) + ".java.patch");
+                        openURI("https://github.com/PatchworkMC/YarnForge/blob/target-applied/patches/minecraft/" + removeSubclassIfNeeded(MappingUtils.getYarnClassName(newClassMember.ownerClass)) + ".java.patch");
                     });
 
                     inspectionPanel.add(viewYarnForgePatch);
