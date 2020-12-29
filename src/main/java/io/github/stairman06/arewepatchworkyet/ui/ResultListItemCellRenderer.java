@@ -1,7 +1,7 @@
 package io.github.stairman06.arewepatchworkyet.ui;
 
-import io.github.stairman06.arewepatchworkyet.MappingUtils;
 import io.github.stairman06.arewepatchworkyet.analyze.Method;
+import io.github.stairman06.arewepatchworkyet.mappings.MappingUtils;
 
 import javax.swing.*;
 import java.awt.*;

@@ -2,6 +2,7 @@ package io.github.stairman06.arewepatchworkyet;
 
 import io.github.stairman06.arewepatchworkyet.analyze.Analyzer;
 import io.github.stairman06.arewepatchworkyet.analyze.Method;
+import io.github.stairman06.arewepatchworkyet.mappings.MappingUtils;
 import io.github.stairman06.arewepatchworkyet.ui.ResultListItem;
 import io.github.stairman06.arewepatchworkyet.ui.ResultListItemCellRenderer;
 import net.fabricmc.mapping.tree.ClassDef;
@@ -14,6 +15,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -93,11 +95,11 @@ public class AreWePatchworkYetGui {
             {
                 JPanel minecraftVersionPanel = new JPanel();
                 minecraftVersionPanel.setLayout(new BoxLayout(minecraftVersionPanel, BoxLayout.X_AXIS));
-                AreWePatchworkYetGui.minecraftVersionBox = new JComboBox<>(MINECRAFT_VERSIONS);
-                AreWePatchworkYetGui.minecraftVersionBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+                minecraftVersionBox = new JComboBox<>(MINECRAFT_VERSIONS);
+                minecraftVersionBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
 
                 minecraftVersionPanel.add(new JLabel("Minecraft Version:"));
-                minecraftVersionPanel.add(AreWePatchworkYetGui.minecraftVersionBox);
+                minecraftVersionPanel.add(minecraftVersionBox);
                 minecraftVersionPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
                 configPanel.add(minecraftVersionPanel);
             }
@@ -106,10 +108,10 @@ public class AreWePatchworkYetGui {
             {
                 JPanel modJarPanel = new JPanel();
                 modJarPanel.setLayout(new BoxLayout(modJarPanel, BoxLayout.X_AXIS));
-                AreWePatchworkYetGui.inputModTextField = new JTextField(new File("./mod.jar").getPath(), 30);
+                inputModTextField = new JTextField(new File("./mod.jar").getPath(), 30);
 
                 modJarPanel.add(new JLabel("Input mod:"));
-                modJarPanel.add(AreWePatchworkYetGui.inputModTextField);
+                modJarPanel.add(inputModTextField);
                 modJarPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
                 configPanel.add(modJarPanel);
             }
@@ -118,9 +120,9 @@ public class AreWePatchworkYetGui {
             {
                 JPanel apiJarPanel = new JPanel();
                 apiJarPanel.setLayout(new BoxLayout(apiJarPanel, BoxLayout.X_AXIS));
-                AreWePatchworkYetGui.apiJarTextField = new JTextField(new File("./api.jar").getPath(), 30);
+                apiJarTextField = new JTextField(new File("./api.jar").getPath(), 30);
                 apiJarPanel.add(new JLabel("Patchwork API Jar:"));
-                apiJarPanel.add(AreWePatchworkYetGui.apiJarTextField);
+                apiJarPanel.add(apiJarTextField);
                 apiJarPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
                 configPanel.add(apiJarPanel);
             }
@@ -129,23 +131,27 @@ public class AreWePatchworkYetGui {
             {
                 JPanel mappingsPanel = new JPanel();
                 mappingsPanel.setLayout(new BoxLayout(mappingsPanel, BoxLayout.X_AXIS));
-                AreWePatchworkYetGui.mappingsBox = new JComboBox<>(MAPPINGS_LIST);
-                AreWePatchworkYetGui.mappingsBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-                AreWePatchworkYetGui.mappingsBox.addActionListener(e -> {
-                    String selected = (String) AreWePatchworkYetGui.mappingsBox.getSelectedItem();
+                mappingsBox = new JComboBox<>(MAPPINGS_LIST);
+                mappingsBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+                mappingsBox.addActionListener(e -> {
+                    String selected = (String) mappingsBox.getSelectedItem();
                     if (selected.equals("yarn")) {
                         try {
-                            MappingUtils.downloadYarnIfNeeded((String) AreWePatchworkYetGui.minecraftVersionBox.getSelectedItem());
+                            MappingUtils.downloadYarnIfNeeded((String) minecraftVersionBox.getSelectedItem());
                         } catch (Exception exception) {
                             exception.printStackTrace();
                         }
                     }
 
-                    AreWePatchworkYetGui.renderNeededMethods();
+                    if (resultSearchTextField.getText().equals("Search classes...")) {
+                        renderNeededMethods();
+                    } else {
+                        renderNeededMethods(resultSearchTextField.getText());
+                    }
                 });
 
                 mappingsPanel.add(new JLabel("Mappings to display in:"));
-                mappingsPanel.add(AreWePatchworkYetGui.mappingsBox);
+                mappingsPanel.add(mappingsBox);
                 mappingsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
                 configPanel.add(mappingsPanel);
             }
@@ -157,9 +163,9 @@ public class AreWePatchworkYetGui {
                 analyzeButton.addActionListener(e -> {
                     try {
                         AreWePatchworkYet.start(
-                                (String) AreWePatchworkYetGui.minecraftVersionBox.getSelectedItem(),
-                                Paths.get(AreWePatchworkYetGui.inputModTextField.getText()),
-                                Paths.get(AreWePatchworkYetGui.apiJarTextField.getText())
+                                (String) minecraftVersionBox.getSelectedItem(),
+                                Paths.get(inputModTextField.getText()),
+                                Paths.get(apiJarTextField.getText())
                         );
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -188,11 +194,11 @@ public class AreWePatchworkYetGui {
                 infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
                 infoPanel.add(new JLabel("These results may not be representative of the actual support."));
 
-                AreWePatchworkYetGui.resultSearchTextField = new JTextField("Search classes...", 30);
-                AreWePatchworkYetGui.resultSearchTextField.addActionListener(e -> {
-                    AreWePatchworkYetGui.renderNeededMethods(AreWePatchworkYetGui.resultSearchTextField.getText());
+                resultSearchTextField = new JTextField("Search classes...", 30);
+                resultSearchTextField.addActionListener(e -> {
+                    renderNeededMethods(resultSearchTextField.getText());
                 });
-                infoPanel.add(AreWePatchworkYetGui.resultSearchTextField);
+                infoPanel.add(resultSearchTextField);
 
                 resultsPanel.add(infoPanel);
             }
@@ -249,7 +255,7 @@ public class AreWePatchworkYetGui {
     }
 
     public static void renderNeededMethods() {
-        AreWePatchworkYetGui.renderNeededMethods("");
+        renderNeededMethods("");
     }
 
     public static void renderNeededMethods(String searchTerm) {
@@ -275,11 +281,11 @@ public class AreWePatchworkYetGui {
     }
 
     public static void inspectClass(String owner) {
-        AreWePatchworkYetGui.inspectionPanel.removeAll();
+        inspectionPanel.removeAll();
 
         updateClass(owner);
 
-        AreWePatchworkYetGui.inspectionPanel.updateUI();
+        inspectionPanel.updateUI();
     }
 
     private static int addClassHierarchy(String className, int indentationLevel) {
@@ -287,7 +293,10 @@ public class AreWePatchworkYetGui {
         for (String superclass : Analyzer.superCache.getOrDefault(className, new HashSet<>())) {
             if (!superclass.equals("java/lang/Object")) {
                 JLabel label = new JLabel(new String(new char[indentationLevel]).replace("\0", "    ") + "- " + MappingUtils.getClassName(superclass));
-                AreWePatchworkYetGui.inspectionPanel.add(label);
+                if (!Analyzer.isClassImplemented(superclass)) {
+                    label.setForeground(Color.RED);
+                }
+                inspectionPanel.add(label);
                 ret++;
                 addClassHierarchy(superclass, indentationLevel + 1);
             }
@@ -300,18 +309,18 @@ public class AreWePatchworkYetGui {
         {
             JLabel label = new JLabel("Selected Class");
             label.setFont(label.getFont().deriveFont(13f));
-            AreWePatchworkYetGui.inspectionPanel.add(label);
+            inspectionPanel.add(label);
         }
 
         {
             JLabel label = new JLabel(MappingUtils.getClassName(owner));
             label.setFont(label.getFont().deriveFont(Font.BOLD));
-            AreWePatchworkYetGui.inspectionPanel.add(label);
+            inspectionPanel.add(label);
         }
 
         {
             JLabel label = new JLabel("implements or extends:");
-            AreWePatchworkYetGui.inspectionPanel.add(label);
+            inspectionPanel.add(label);
         }
 
         {
@@ -319,13 +328,32 @@ public class AreWePatchworkYetGui {
 
             if (hierarchyAmount == 0) {
                 JLabel label = new JLabel("Unknown or nothing");
-                AreWePatchworkYetGui.inspectionPanel.add(label);
+                inspectionPanel.add(label);
             }
         }
     }
 
+    private static void showImplementationTip(String tip) {
+        JLabel tipsLabel = new JLabel("Implementation tips");
+        tipsLabel.setBorder(new EmptyBorder(20, 0, 0, 0));
+        tipsLabel.setFont(tipsLabel.getFont().deriveFont(13f));
+        tipsLabel.setAlignmentY(Component.TOP_ALIGNMENT);
+
+        JLabel tipLabel = new JLabel("<html>" + tip + "</html>");
+        inspectionPanel.add(tipsLabel);
+        inspectionPanel.add(tipLabel);
+    }
+
+    private static void openURI(String url) {
+        try {
+            Desktop.getDesktop().browse(new URI(url));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void inspectMethod(Method newMethod) {
-        AreWePatchworkYetGui.inspectionPanel.removeAll();
+        inspectionPanel.removeAll();
 
         updateClass(newMethod.ownerClass);
         {
@@ -334,14 +362,60 @@ public class AreWePatchworkYetGui {
             label.setFont(label.getFont().deriveFont(13f));
             label.setAlignmentY(Component.TOP_ALIGNMENT);
 
-            AreWePatchworkYetGui.inspectionPanel.add(label);
+            inspectionPanel.add(label);
         }
-        JLabel label = new JLabel(newMethod.name + MappingUtils.getDescriptor(newMethod.descriptor));
-        AreWePatchworkYetGui.inspectionPanel.add(label);
-        AreWePatchworkYetGui.inspectionPanel.updateUI();
+
+        {
+            JLabel label = new JLabel(newMethod.name + MappingUtils.getDescriptor(newMethod.descriptor));
+            inspectionPanel.add(label);
+        }
+
+        {
+            if (newMethod.caller != null) {
+                JLabel label = new JLabel("Called by:");
+                inspectionPanel.add(label);
+
+                JLabel label2 = new JLabel(MappingUtils.getClassName(newMethod.caller));
+                inspectionPanel.add(label2);
+            }
+        }
+
+        {
+            if (newMethod.ownerClass.startsWith("net/minecraftforge/")) {
+                JButton viewForge = new JButton("View source (YarnForge)");
+                viewForge.addActionListener(e -> {
+                    openURI("https://github.com/PatchworkMC/YarnForge/blob/target-applied/src/main/java/" + newMethod.ownerClass + ".java");
+                });
+
+                inspectionPanel.add(viewForge);
+            }
+
+            if (newMethod.ownerClass.startsWith("net/minecraft/")) {
+                if (newMethod.name.equals("<init>")) {
+                    showImplementationTip("This looks like a Forge-added constructor. You'll need to redirect this to a custom class in Patcher.");
+                } else {
+                    showImplementationTip("It looks like Forge is adding a method to this Minecraft class. You'll need to create a duck interface, mixin to the Minecraft class, and implement the interface.");
+                }
+
+                {
+                    JButton viewYarnForgePatch = new JButton("View Forge's patch (YarnForge)");
+                    viewYarnForgePatch.addActionListener(e -> {
+                        try {
+                            MappingUtils.downloadYarnIfNeeded((String) minecraftVersionBox.getSelectedItem());
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                        openURI("https://github.com/PatchworkMC/YarnForge/blob/target-applied/patches/minecraft/" + MappingUtils.getYarnClassName(newMethod.ownerClass) + ".java.patch");
+                    });
+
+                    inspectionPanel.add(viewYarnForgePatch);
+                }
+            }
+        }
+        inspectionPanel.updateUI();
     }
 
     public static String getCurrentMappings() {
-        return (String) AreWePatchworkYetGui.mappingsBox.getSelectedItem();
+        return (String) mappingsBox.getSelectedItem();
     }
 }

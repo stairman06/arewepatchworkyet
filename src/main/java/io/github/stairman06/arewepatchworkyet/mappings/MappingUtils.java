@@ -1,6 +1,6 @@
-package io.github.stairman06.arewepatchworkyet;
+package io.github.stairman06.arewepatchworkyet.mappings;
 
-import io.github.stairman06.arewepatchworkyet.mappings.AsmRemapper;
+import io.github.stairman06.arewepatchworkyet.AreWePatchworkYetGui;
 import net.fabricmc.mapping.tree.ClassDef;
 import net.fabricmc.mapping.tree.TinyMappingFactory;
 import net.fabricmc.mapping.tree.TinyTree;
@@ -50,7 +50,9 @@ public class MappingUtils {
             MappingUtils.downloadYarn(version);
         }
 
-        MappingUtils.setupYarnTree(version);
+        if (tinyTree == null) {
+            MappingUtils.setupYarnTree(version);
+        }
     }
 
     public static String getYarnClassName(String intermediary) {

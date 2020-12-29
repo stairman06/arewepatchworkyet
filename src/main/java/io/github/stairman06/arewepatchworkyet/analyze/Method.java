@@ -4,11 +4,13 @@ public class Method implements Comparable<Method> {
     public String name;
     public String descriptor;
     public String ownerClass;
+    public String caller;
 
-    public Method(String name, String descriptor, String owner) {
+    public Method(String name, String descriptor, String owner, String caller) {
         this.name = name;
         this.descriptor = descriptor;
         this.ownerClass = owner;
+        this.caller = caller;
     }
 
     @Override

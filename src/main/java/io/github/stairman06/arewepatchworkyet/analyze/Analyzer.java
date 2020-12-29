@@ -7,10 +7,13 @@ import java.util.TreeSet;
 public class Analyzer {
     /**
      * Default names to skip, these are usually not a problem.
-     * Skips JDK classes, Mojang (DFU, Brigadier) classes, FastUtil, Fabric (@Environment annotation) classes, and Google (GSON, Guava) classes
+     * Skips JDK classes, Mojang (DFU, Brigadier) classes, FastUtil, Fabric (@Environment annotation) classes, Google (GSON, Guava), ASM, and LWJGL classes
      * TODO: Make this user configurable, so the user can choose to skip unneeded classes (e.g. Create references JEI for API, but it's not required)
      */
-    private static final String[] DEFAULT_SKIPPED_NAMES = {"java/", "com/mojang/", "org/apache/", "it/unimi/", "net/fabricmc/", "com/google/"};
+    private static final String[] DEFAULT_SKIPPED_NAMES = {"java/", "com/mojang/", "org/apache/", "it/unimi/", "net/fabricmc/", "com/google/", "org/objectweb/", "org/lwjgl/"};
+
+
+    public static HashSet<String> implementedClasses = new HashSet<>();
 
     /**
      * Contains methods that are known to be implemented.
@@ -38,7 +41,7 @@ public class Analyzer {
      * @param name       The name of this method
      * @param descriptor THe descriptor of this method
      */
-    public static void analyzeMethodName(String owner, String name, String descriptor) {
+    public static void analyzeMethodName(String owner, String name, String descriptor, String caller) {
         if (owner.startsWith("[L")) { // If this is an array, trim off the array indicator
             owner = owner.substring(2);
         }
@@ -64,7 +67,7 @@ public class Analyzer {
         if (!exists) {
             // The method does not exist in the target owner,
             // so we need to add it to neededMethods
-            addNeededMethod(owner, new Method(name, descriptor, owner));
+            addNeededMethod(owner, new Method(name, descriptor, owner, caller));
         }
     }
 
@@ -93,6 +96,18 @@ public class Analyzer {
      * @return true if the method exists
      */
     private static boolean checkIfMethodExists(String owner, String name, String descriptor) {
+        if (owner.equals("java/util/AbstractList") || owner.equals("java/util/List") || owner.equals("java/util/ArrayList")) {
+            if (name.equals("add") || name.equals("forEach") || name.equals("addAll")) {
+                return true; // hacky handling for JDK classes
+            }
+        }
+
+        if (owner.startsWith("com/google/gson")) {
+            if (name.equals("getType")) {
+                return true; // hardcoded exception that is bad
+            }
+        }
+
         if (owner.startsWith("java/")) { // If we've gotten here and are checking a JDK class, it doesn't exist
             return false;
         }
@@ -118,5 +133,13 @@ public class Analyzer {
         }
 
         return false;
+    }
+
+    public static boolean isClassImplemented(String clazz) {
+        if (clazz.startsWith("java/")) {
+            return true;
+        }
+
+        return implementedClasses.contains(clazz);
     }
 }

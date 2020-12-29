@@ -47,6 +47,7 @@ public class BaseClassVisitor extends ClassVisitor {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         classesToApply.add(name);
+        Analyzer.implementedClasses.add(name);
         this.addImplementedSet();
 
         HashSet<String> superSet = Analyzer.superCache.getOrDefault(name, new HashSet<>());
@@ -60,7 +61,7 @@ public class BaseClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         for (String className : classesToApply) {
-            Analyzer.implementedMethods.get(className).add(new Method(name, descriptor, className));
+            Analyzer.implementedMethods.get(className).add(new Method(name, descriptor, className, null));
         }
 
         return super.visitMethod(access, name, descriptor, signature, exceptions);
