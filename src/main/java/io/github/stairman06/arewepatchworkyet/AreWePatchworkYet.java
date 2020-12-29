@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,9 +24,10 @@ public class AreWePatchworkYet {
         LOGGER.info("Downloading and remapping Minecraft...");
         MinecraftUtils.downloadAndRemapMinecraft(minecraftVersion);
 
-        LOGGER.info("Processing Minecraft and Patchwork API jars");
+        LOGGER.info("Processing Minecraft and Patchwork API jars...");
         AreWePatchworkYet.processLibs(Paths.get("./data/minecraft-" + minecraftVersion + "-intermediary.jar"), apiJarPath);
 
+        LOGGER.info("Processing mod jar...");
         AreWePatchworkYet.processModJar(new JarFile(modJarPath.toFile()));
 
         AreWePatchworkYetGui.renderNeededMethods();
@@ -37,7 +39,6 @@ public class AreWePatchworkYet {
         JarReader.readDefinedMethods(mcFile);
         JarReader.readDefinedMethods(patchworkFile);
     }
-
 
     public static void processModJar(JarFile jarFile) throws Exception {
         JarReader.readDefinedMethods(jarFile); // add defined classes

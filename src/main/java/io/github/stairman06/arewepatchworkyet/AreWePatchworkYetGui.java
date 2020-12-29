@@ -16,6 +16,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -27,6 +28,7 @@ public class AreWePatchworkYetGui {
     private static JComboBox<String> mappingsBox;
     private static JTextField inputModTextField;
     private static JTextField apiJarTextField;
+    private static JTextField resultSearchTextField;
     private static JPanel inspectionPanel;
     private static DefaultListModel<ResultListItem> listModel = new DefaultListModel<>();
 
@@ -186,6 +188,12 @@ public class AreWePatchworkYetGui {
                 infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
                 infoPanel.add(new JLabel("These results may not be representative of the actual support."));
 
+                AreWePatchworkYetGui.resultSearchTextField = new JTextField("Search classes...", 30);
+                AreWePatchworkYetGui.resultSearchTextField.addActionListener(e -> {
+                    AreWePatchworkYetGui.renderNeededMethods(AreWePatchworkYetGui.resultSearchTextField.getText());
+                });
+                infoPanel.add(AreWePatchworkYetGui.resultSearchTextField);
+
                 resultsPanel.add(infoPanel);
             }
 
@@ -241,15 +249,29 @@ public class AreWePatchworkYetGui {
     }
 
     public static void renderNeededMethods() {
+        AreWePatchworkYetGui.renderNeededMethods("");
+    }
+
+    public static void renderNeededMethods(String searchTerm) {
+        int methodCount = 0;
+
+        listModel.clear();
         for(Map.Entry<String, TreeSet<Method>> entry : Analyzer.neededMethods.entrySet()) {
             ResultListItem item = new ResultListItem(ResultListItem.Type.CLASS, entry.getKey());
 
-            listModel.addElement(item);
-            for(Method method : entry.getValue()) {
-                ResultListItem methodItem = new ResultListItem(ResultListItem.Type.METHOD, method);
-                listModel.addElement(methodItem);
+            String keyName = MappingUtils.getClassName(entry.getKey());
+            if(keyName.toLowerCase().contains(searchTerm.trim().toLowerCase()) || searchTerm.trim().isEmpty()) {
+                listModel.addElement(item);
+
+                for(Method method : entry.getValue()) {
+                    methodCount++;
+                    ResultListItem methodItem = new ResultListItem(ResultListItem.Type.METHOD, method);
+                    listModel.addElement(methodItem);
+                }
             }
         }
+
+        System.out.println("Result method count: " + methodCount);
     }
 
     public static void inspectClass(String owner) {
@@ -260,6 +282,20 @@ public class AreWePatchworkYetGui {
         AreWePatchworkYetGui.inspectionPanel.updateUI();
     }
 
+    private static int addClassHierarchy(String className, int indentationLevel) {
+        int ret = 0;
+        for(String superclass : Analyzer.superCache.getOrDefault(className, new HashSet<>())) {
+            if(!superclass.equals("java/lang/Object")) {
+                JLabel label = new JLabel(new String(new char[indentationLevel]).replace("\0", "    ") + "- " + MappingUtils.getClassName(superclass));
+                AreWePatchworkYetGui.inspectionPanel.add(label);
+                ret++;
+                addClassHierarchy(superclass, indentationLevel + 1);
+            }
+        }
+
+        return ret;
+    }
+
     public static void updateClass(String owner) {
         {
             JLabel label = new JLabel("Selected Class");
@@ -268,8 +304,23 @@ public class AreWePatchworkYetGui {
         }
 
         {
-            JLabel label = new JLabel(owner);
+            JLabel label = new JLabel(MappingUtils.getClassName(owner));
+            label.setFont(label.getFont().deriveFont(Font.BOLD));
             AreWePatchworkYetGui.inspectionPanel.add(label);
+        }
+
+        {
+            JLabel label = new JLabel("implements or extends:");
+            AreWePatchworkYetGui.inspectionPanel.add(label);
+        }
+
+        {
+            int hierarchyAmount = addClassHierarchy(owner, 1);
+
+            if(hierarchyAmount == 0) {
+                JLabel label = new JLabel("Unknown or nothing");
+                AreWePatchworkYetGui.inspectionPanel.add(label);
+            }
         }
     }
 
@@ -279,12 +330,13 @@ public class AreWePatchworkYetGui {
         updateClass(newMethod.ownerClass);
         {
             JLabel label = new JLabel("Selected Method");
+            label.setBorder(new EmptyBorder(20, 0, 0, 0));
             label.setFont(label.getFont().deriveFont(13f));
             label.setAlignmentY(Component.TOP_ALIGNMENT);
 
             AreWePatchworkYetGui.inspectionPanel.add(label);
         }
-        JLabel label = new JLabel(newMethod.name + newMethod.descriptor);
+        JLabel label = new JLabel(newMethod.name + MappingUtils.getDescriptor(newMethod.descriptor));
         AreWePatchworkYetGui.inspectionPanel.add(label);
         AreWePatchworkYetGui.inspectionPanel.updateUI();
     }

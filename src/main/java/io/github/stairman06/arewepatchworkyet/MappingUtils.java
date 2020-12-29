@@ -70,4 +70,30 @@ public class MappingUtils {
         AsmRemapper remapper = new AsmRemapper();
         return remapper.mapMethodDesc(descriptor);
     }
+
+    /**
+     * Takes a name, and remaps it if necessary
+     * @param rawName Raw name, probably in intermediary mappings
+     * @return A mapped name if the user has selected to view it
+     */
+    public static String getClassName(String rawName) {
+        if (AreWePatchworkYetGui.getCurrentMappings().equals("yarn")) {
+            return MappingUtils.getYarnClassName(rawName);
+        }
+
+        return rawName;
+    }
+
+    /**
+     * Takes a descriptor and remaps it if necessary
+     * @param rawDescriptor R descriptor, probably in intermediary mappings
+     * @return A mapped descriptor if the user has selected to view it
+     */
+    public static String getDescriptor(String rawDescriptor) {
+        if (AreWePatchworkYetGui.getCurrentMappings().equals("yarn")) {
+            return MappingUtils.remapDescriptorToYarn(rawDescriptor);
+        }
+
+        return rawDescriptor;
+    }
 }

@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
 }
 
 group 'io.github.stairman06'
@@ -26,6 +27,21 @@ dependencies {
     implementation 'net.fabricmc:tiny-remapper:0.3.1.72'
     implementation 'org.apache.logging.log4j:log4j-api:2.13.2'
     implementation 'org.apache.logging.log4j:log4j-core:2.13.2'
+}
 
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'io.github.stairman06.arewepatchworkyet.AreWePatchworkYetGui'
+        )
+    }
+    from {
+        // make the jar fat
+        configurations.runtimeClasspath.collect { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }}
+    }
+}
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+shadowJar {
+    minimize()
 }

@@ -7,9 +7,13 @@ import org.objectweb.asm.Type;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
+/**
+ * Visits String arrays in Annotations
+ */
 public class AnnotationStringArrayVisitor extends AnnotationVisitor {
-    private ArrayList<String> items = new ArrayList<>();
-    private Consumer<ArrayList<String>> consumer;
+    private final ArrayList<String> items = new ArrayList<>();
+    private final Consumer<ArrayList<String>> consumer;
+
     public AnnotationStringArrayVisitor(AnnotationVisitor parent, Consumer<ArrayList<String>> consumer) {
         super(Opcodes.ASM9, parent);
         this.consumer = consumer;
@@ -17,7 +21,7 @@ public class AnnotationStringArrayVisitor extends AnnotationVisitor {
 
     @Override
     public void visit(String name, Object value) {
-        items.add(((Type)value).getClassName().replace('.', '/'));
+        items.add(((Type) value).getClassName().replace('.', '/'));
         super.visit(name, value);
     }
 
