@@ -16,7 +16,8 @@ class MixinAnnotationVisitor extends AnnotationVisitor {
 
     /**
      * Default constructor for MixinAnnotationVisitor
-     * @param parent Parent annotation
+     *
+     * @param parent   Parent annotation
      * @param consumer This consumer is called after the annotations are visited.
      */
     public MixinAnnotationVisitor(AnnotationVisitor parent, Consumer<ArrayList<String>> consumer) {

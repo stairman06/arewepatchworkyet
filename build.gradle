@@ -35,10 +35,6 @@ jar {
             'Main-Class': 'io.github.stairman06.arewepatchworkyet.AreWePatchworkYetGui'
         )
     }
-    from {
-        // make the jar fat
-        configurations.runtimeClasspath.collect { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }}
-    }
 }
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar

@@ -42,12 +42,12 @@ public class MinecraftUtils {
             Gson gson = new Gson();
 
             JsonArray versions = gson.fromJson(launcherMetaString, JsonObject.class).get("versions").getAsJsonArray();
-            for(JsonElement element : versions) {
-                if(element.isJsonObject()) {
+            for (JsonElement element : versions) {
+                if (element.isJsonObject()) {
                     JsonObject object = element.getAsJsonObject();
                     String id = object.get("id").getAsString();
 
-                    if(id.equals(version)) {
+                    if (id.equals(version)) {
                         String versionJsonUrl = object.get("url").getAsString();
 
                         JsonObject downloads = gson.fromJson(IOUtils.toString(new URL(versionJsonUrl), StandardCharsets.UTF_8), JsonObject.class).getAsJsonObject("downloads");
@@ -57,7 +57,7 @@ public class MinecraftUtils {
                     }
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

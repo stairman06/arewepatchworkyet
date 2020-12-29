@@ -44,7 +44,7 @@ public class ResultListItemCellRenderer extends JButton implements ListCellRende
         setBackground(isSelected ? Color.LIGHT_GRAY : Color.WHITE);
 
         ResultListItem.Type type = item.getType();
-        if(type == ResultListItem.Type.CLASS) {
+        if (type == ResultListItem.Type.CLASS) {
             setText(MappingUtils.getClassName((String) item.getObject()));
         } else if (type == ResultListItem.Type.METHOD) {
             Method method = (Method) item.getObject();

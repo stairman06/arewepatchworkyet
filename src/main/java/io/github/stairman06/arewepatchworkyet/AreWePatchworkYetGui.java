@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.TreeSet;
 
 public class AreWePatchworkYetGui {
-    private static final String[] MINECRAFT_VERSIONS = new String[] { "1.16.4" };
-    private static final String[] MAPPINGS_LIST = new String[] { "intermediary", "yarn" };
+    private static final String[] MINECRAFT_VERSIONS = new String[]{"1.16.4"};
+    private static final String[] MAPPINGS_LIST = new String[]{"intermediary", "yarn"};
 
     private static JComboBox<String> minecraftVersionBox;
     private static JComboBox<String> mappingsBox;
@@ -34,8 +34,8 @@ public class AreWePatchworkYetGui {
 
 
     private static String getMappingClass(TinyTree tree, String classname) {
-        for(ClassDef def : tree.getClasses()) {
-            if(def.getName("intermediary").equals(classname)) {
+        for (ClassDef def : tree.getClasses()) {
+            if (def.getName("intermediary").equals(classname)) {
                 return def.getName("named");
             }
         }
@@ -45,15 +45,15 @@ public class AreWePatchworkYetGui {
 
     public static void main(String[] args) throws Exception {
         try {
-            if(Files.exists(Paths.get("./temp"))) {
+            if (Files.exists(Paths.get("./temp"))) {
                 FileUtils.deleteDirectory(new File("./temp"));
             }
 
             new File("./temp").mkdirs();
-            if(!Files.exists(Paths.get("./data"))) {
+            if (!Files.exists(Paths.get("./data"))) {
                 new File("./data").mkdirs();
             }
-        }catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -133,7 +133,7 @@ public class AreWePatchworkYetGui {
                 AreWePatchworkYetGui.mappingsBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
                 AreWePatchworkYetGui.mappingsBox.addActionListener(e -> {
                     String selected = (String) AreWePatchworkYetGui.mappingsBox.getSelectedItem();
-                    if(selected.equals("yarn")) {
+                    if (selected.equals("yarn")) {
                         try {
                             MappingUtils.downloadYarnIfNeeded((String) AreWePatchworkYetGui.minecraftVersionBox.getSelectedItem());
                         } catch (Exception exception) {
@@ -157,11 +157,11 @@ public class AreWePatchworkYetGui {
                 analyzeButton.addActionListener(e -> {
                     try {
                         AreWePatchworkYet.start(
-                            (String) AreWePatchworkYetGui.minecraftVersionBox.getSelectedItem(),
-                            Paths.get(AreWePatchworkYetGui.inputModTextField.getText()),
-                            Paths.get(AreWePatchworkYetGui.apiJarTextField.getText())
+                                (String) AreWePatchworkYetGui.minecraftVersionBox.getSelectedItem(),
+                                Paths.get(AreWePatchworkYetGui.inputModTextField.getText()),
+                                Paths.get(AreWePatchworkYetGui.apiJarTextField.getText())
                         );
-                    } catch(Exception ex) {
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 });
@@ -203,11 +203,11 @@ public class AreWePatchworkYetGui {
                 list.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
-                        if(list.getSelectedValue() != null) {
+                        if (list.getSelectedValue() != null) {
                             ResultListItem selectedItem = list.getSelectedValue();
-                            if(selectedItem.getType() == ResultListItem.Type.METHOD) {
+                            if (selectedItem.getType() == ResultListItem.Type.METHOD) {
                                 inspectMethod((Method) selectedItem.getObject());
-                            }else if(selectedItem.getType() == ResultListItem.Type.CLASS) {
+                            } else if (selectedItem.getType() == ResultListItem.Type.CLASS) {
                                 inspectClass((String) selectedItem.getObject());
                             }
                         }
@@ -256,14 +256,14 @@ public class AreWePatchworkYetGui {
         int methodCount = 0;
 
         listModel.clear();
-        for(Map.Entry<String, TreeSet<Method>> entry : Analyzer.neededMethods.entrySet()) {
+        for (Map.Entry<String, TreeSet<Method>> entry : Analyzer.neededMethods.entrySet()) {
             ResultListItem item = new ResultListItem(ResultListItem.Type.CLASS, entry.getKey());
 
             String keyName = MappingUtils.getClassName(entry.getKey());
-            if(keyName.toLowerCase().contains(searchTerm.trim().toLowerCase()) || searchTerm.trim().isEmpty()) {
+            if (keyName.toLowerCase().contains(searchTerm.trim().toLowerCase()) || searchTerm.trim().isEmpty()) {
                 listModel.addElement(item);
 
-                for(Method method : entry.getValue()) {
+                for (Method method : entry.getValue()) {
                     methodCount++;
                     ResultListItem methodItem = new ResultListItem(ResultListItem.Type.METHOD, method);
                     listModel.addElement(methodItem);
@@ -284,8 +284,8 @@ public class AreWePatchworkYetGui {
 
     private static int addClassHierarchy(String className, int indentationLevel) {
         int ret = 0;
-        for(String superclass : Analyzer.superCache.getOrDefault(className, new HashSet<>())) {
-            if(!superclass.equals("java/lang/Object")) {
+        for (String superclass : Analyzer.superCache.getOrDefault(className, new HashSet<>())) {
+            if (!superclass.equals("java/lang/Object")) {
                 JLabel label = new JLabel(new String(new char[indentationLevel]).replace("\0", "    ") + "- " + MappingUtils.getClassName(superclass));
                 AreWePatchworkYetGui.inspectionPanel.add(label);
                 ret++;
@@ -317,7 +317,7 @@ public class AreWePatchworkYetGui {
         {
             int hierarchyAmount = addClassHierarchy(owner, 1);
 
-            if(hierarchyAmount == 0) {
+            if (hierarchyAmount == 0) {
                 JLabel label = new JLabel("Unknown or nothing");
                 AreWePatchworkYetGui.inspectionPanel.add(label);
             }

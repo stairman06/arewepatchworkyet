@@ -14,7 +14,7 @@ import java.util.jar.JarFile;
 public class JarReader {
     public static void readDefinedMethods(JarFile jarFile) {
         for (JarEntry entry : Collections.list(jarFile.entries())) {
-            if(entry.getName().endsWith(".class")) {
+            if (entry.getName().endsWith(".class")) {
                 // class files
                 try {
                     InputStream inputStream = jarFile.getInputStream(entry);
@@ -22,17 +22,17 @@ public class JarReader {
                     ClassVisitor cv = new BaseClassVisitor();
 
                     classReader.accept(cv, 0);
-                }catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }else if(entry.getName().endsWith(".jar")) {
+            } else if (entry.getName().endsWith(".jar")) {
                 // handling of JiJ
                 try {
                     File tempFile = File.createTempFile("jij", "jij", new File("./temp"));
                     tempFile.delete();
                     Files.copy(jarFile.getInputStream(entry), tempFile.toPath());
                     readDefinedMethods(new JarFile(tempFile));
-                }catch(Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }

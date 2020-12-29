@@ -6,11 +6,11 @@ import java.util.TreeSet;
 
 public class Analyzer {
     /**
-     * Defaul tnames to skip, these are usually not a problem.
+     * Default names to skip, these are usually not a problem.
      * Skips JDK classes, Mojang (DFU, Brigadier) classes, FastUtil, Fabric (@Environment annotation) classes, and Google (GSON, Guava) classes
      * TODO: Make this user configurable, so the user can choose to skip unneeded classes (e.g. Create references JEI for API, but it's not required)
      */
-    private static final String[] DEFAULT_SKIPPED_NAMES = { "java/", "com/mojang/", "org/apache/", "it/unimi/", "net/fabricmc/", "com/google/" };
+    private static final String[] DEFAULT_SKIPPED_NAMES = {"java/", "com/mojang/", "org/apache/", "it/unimi/", "net/fabricmc/", "com/google/"};
 
     /**
      * Contains methods that are known to be implemented.
@@ -33,34 +33,35 @@ public class Analyzer {
 
     /**
      * Analyze a method name, and add it to {@literal neededMethods} if needed.
-     * @param owner The owner of this method
-     * @param name The name of this method
+     *
+     * @param owner      The owner of this method
+     * @param name       The name of this method
      * @param descriptor THe descriptor of this method
      */
     public static void analyzeMethodName(String owner, String name, String descriptor) {
-        if(owner.startsWith("[L")) { // If this is an array, trim off the array indicator
+        if (owner.startsWith("[L")) { // If this is an array, trim off the array indicator
             owner = owner.substring(2);
         }
 
-        for(String toSkip : DEFAULT_SKIPPED_NAMES) {
-            if(owner.startsWith(toSkip)) {
+        for (String toSkip : DEFAULT_SKIPPED_NAMES) {
+            if (owner.startsWith(toSkip)) {
                 return;
             }
         }
 
         // Skip methods that are default in Object
-        if(name.equals("clone") || name.equals("hashCode") || name.equals("toString") || name.equals("equals")) {
+        if (name.equals("clone") || name.equals("hashCode") || name.equals("toString") || name.equals("equals")) {
             return; // Object methods are useless
         }
 
         // Skip methods that are default in Enum
-        if(name.equals("name") || name.equals("ordinal")) {
+        if (name.equals("name") || name.equals("ordinal")) {
             return;
         }
 
         boolean exists = checkIfMethodExists(owner, name, descriptor);
 
-        if(!exists) {
+        if (!exists) {
             // The method does not exist in the target owner,
             // so we need to add it to neededMethods
             addNeededMethod(owner, new Method(name, descriptor, owner));
@@ -69,7 +70,8 @@ public class Analyzer {
 
     /**
      * Adds a method to {@literal neededMethods}, and creates the TreeSet if needed
-     * @param owner Owner of the method
+     *
+     * @param owner  Owner of the method
      * @param method Instance of {@link Method}
      */
     private static void addNeededMethod(String owner, Method method) {
@@ -84,32 +86,33 @@ public class Analyzer {
     /**
      * This checks if a method is known to exist in a given owner.
      * It will also check superclasses and interfaces.
-     * @param owner The owner of the method
-     * @param name Name of the method
+     *
+     * @param owner      The owner of the method
+     * @param name       Name of the method
      * @param descriptor The method's descriptor
      * @return true if the method exists
      */
     private static boolean checkIfMethodExists(String owner, String name, String descriptor) {
-        if(owner.startsWith("java/")) { // If we've gotten here and are checking a JDK class, it doesn't exist
+        if (owner.startsWith("java/")) { // If we've gotten here and are checking a JDK class, it doesn't exist
             return false;
         }
 
         // Skips intermediary method_ names, which are Minecraft methods
         // This isn't really a good idea and should be replaced with a proper check for Minecraft classes sometime
-        if(name.startsWith("method_")) {
+        if (name.startsWith("method_")) {
             return true;
         }
 
         // Loop through implemented methods to see if it exists
-        for(Method method : implementedMethods.getOrDefault(owner, new HashSet<>())) {
+        for (Method method : implementedMethods.getOrDefault(owner, new HashSet<>())) {
             if (method.name.equals(name) && method.descriptor.equals(descriptor)) {
                 return true;
             }
         }
 
         // Loop through superclasses to check if it exists
-        for(String superclass : superCache.getOrDefault(owner, new HashSet<>()))  {
-            if(checkIfMethodExists(superclass, name, descriptor)) {
+        for (String superclass : superCache.getOrDefault(owner, new HashSet<>())) {
+            if (checkIfMethodExists(superclass, name, descriptor)) {
                 return true;
             }
         }

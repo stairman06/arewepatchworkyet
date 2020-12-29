@@ -13,7 +13,7 @@ public class Method implements Comparable<Method> {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof Method) {
+        if (obj instanceof Method) {
             return ((Method) obj).name.equals(this.name) && ((Method) obj).descriptor.equals(this.descriptor);
         } else {
             return false;

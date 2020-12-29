@@ -5,15 +5,11 @@ import net.fabricmc.mapping.tree.ClassDef;
 import net.fabricmc.mapping.tree.TinyMappingFactory;
 import net.fabricmc.mapping.tree.TinyTree;
 import org.apache.commons.io.FileUtils;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.Remapper;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -34,7 +30,7 @@ public class MappingUtils {
         Path intermediaryDest = Paths.get("./data/intermediary-" + version + ".tiny");
         FileUtils.copyURLToFile(new URL("https://maven.fabricmc.net/net/fabricmc/intermediary/" + version + "/intermediary-" + version + ".jar"), jarDest.toFile());
 
-        try(FileSystem fs = FileSystems.newFileSystem(jarDest, null)) {
+        try (FileSystem fs = FileSystems.newFileSystem(jarDest, null)) {
             Files.copy(fs.getPath("/mappings/mappings.tiny"), intermediaryDest);
         }
     }
@@ -44,7 +40,7 @@ public class MappingUtils {
         Path yarnDest = Paths.get("./data/yarn-" + version + "-v2.tiny");
         FileUtils.copyURLToFile(new URL("https://maven.fabricmc.net/net/fabricmc/yarn/" + version + "+build.1/yarn-" + version + "+build.1-v2.jar"), jarDest.toFile());
 
-        try(FileSystem fs = FileSystems.newFileSystem(jarDest, null)) {
+        try (FileSystem fs = FileSystems.newFileSystem(jarDest, null)) {
             Files.copy(fs.getPath("/mappings/mappings.tiny"), yarnDest);
         }
     }
@@ -73,6 +69,7 @@ public class MappingUtils {
 
     /**
      * Takes a name, and remaps it if necessary
+     *
      * @param rawName Raw name, probably in intermediary mappings
      * @return A mapped name if the user has selected to view it
      */
@@ -86,7 +83,8 @@ public class MappingUtils {
 
     /**
      * Takes a descriptor and remaps it if necessary
-     * @param rawDescriptor R descriptor, probably in intermediary mappings
+     *
+     * @param rawDescriptor Raw descriptor, probably in intermediary mappings
      * @return A mapped descriptor if the user has selected to view it
      */
     public static String getDescriptor(String rawDescriptor) {
