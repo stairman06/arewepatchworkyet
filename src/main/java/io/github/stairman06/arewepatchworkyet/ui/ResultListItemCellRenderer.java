@@ -45,12 +45,17 @@ public class ResultListItemCellRenderer extends JButton implements ListCellRende
 
         ResultListItem.Type type = item.getType();
         if (type == ResultListItem.Type.CLASS) {
-            setText(MappingUtils.getClassName((String) item.getObject()));
+            setText("C " + MappingUtils.getClassName((String) item.getObject()));
         } else if (type == ResultListItem.Type.CLASS_MEMBER) {
             ClassMember classMember = (ClassMember) item.getObject();
 
             if (classMember.type == ClassMember.Type.METHOD) {
-                setText("      M " + classMember.name + MappingUtils.getMethodDescriptor(classMember.descriptor));
+                try {
+                    setText("      M " + classMember.name + MappingUtils.getMethodDescriptor(classMember.descriptor));
+                } catch (Exception e) {
+                    setText("     M" + "Error");
+                    e.printStackTrace();
+                }
             } else if (classMember.type == ClassMember.Type.FIELD) {
                 setText("      F " + MappingUtils.getFieldDescriptor(classMember.descriptor) + " " + classMember.name);
             }

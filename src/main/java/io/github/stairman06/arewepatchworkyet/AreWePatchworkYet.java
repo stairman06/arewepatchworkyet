@@ -1,5 +1,6 @@
 package io.github.stairman06.arewepatchworkyet;
 
+import io.github.stairman06.arewepatchworkyet.analyze.Analyzer;
 import io.github.stairman06.arewepatchworkyet.analyze.JarReader;
 import io.github.stairman06.arewepatchworkyet.analyze.asm.ModClassVisitor;
 import org.apache.logging.log4j.LogManager;
@@ -19,6 +20,12 @@ public class AreWePatchworkYet {
 
     public static void start(String minecraftVersion, Path modJarPath, Path apiJarPath) throws Exception {
         LOGGER.info("Starting analyzing mod jar...");
+        Analyzer.forgeClassMembers.clear();
+        Analyzer.forgeSuperCache.clear();
+        Analyzer.superCache.clear();
+        Analyzer.neededClassMembers.clear();
+        Analyzer.implementedClassMembers.clear();
+        Analyzer.implementedClasses.clear();
 
         LOGGER.info("Downloading and remapping Minecraft...");
         MinecraftUtils.downloadAndRemapMinecraft(minecraftVersion);
@@ -26,21 +33,31 @@ public class AreWePatchworkYet {
         LOGGER.info("Processing Minecraft and Patchwork API jars...");
         AreWePatchworkYet.processLibs(Paths.get("./data/minecraft-" + minecraftVersion + "-intermediary.jar"), apiJarPath);
 
+        LOGGER.info("Processing patched Minecraft and Forge Universal jars...");
+        AreWePatchworkYet.processForge(Paths.get("./data/forge-intermediary.jar"), Paths.get("./data/mcpatched-intermediary.jar"));
+
         LOGGER.info("Processing mod jar...");
         AreWePatchworkYet.processModJar(new JarFile(modJarPath.toFile()));
-
+        
         AreWePatchworkYetGui.renderNeededMethods();
+    }
+
+    public static void processForge(Path forgeJarPath, Path patchedMcJarPath) throws Exception {
+        JarFile forgeFile = new JarFile(forgeJarPath.toFile());
+        JarFile mcFile = new JarFile(patchedMcJarPath.toFile());
+        JarReader.readDefinedMethods(forgeFile, true);
+        JarReader.readDefinedMethods(mcFile, true);
     }
 
     public static void processLibs(Path minecraftJarPath, Path apiJarPath) throws Exception {
         JarFile mcFile = new JarFile(minecraftJarPath.toFile());
         JarFile patchworkFile = new JarFile(apiJarPath.toFile());
-        JarReader.readDefinedMethods(mcFile);
-        JarReader.readDefinedMethods(patchworkFile);
+        JarReader.readDefinedMethods(mcFile, false);
+        JarReader.readDefinedMethods(patchworkFile, false);
     }
 
     public static void processModJar(JarFile jarFile) throws Exception {
-        JarReader.readDefinedMethods(jarFile); // add defined classes
+        JarReader.readDefinedMethods(jarFile, false); // add defined classes
         Enumeration<JarEntry> entries = jarFile.entries();
         while (entries.hasMoreElements()) {
             JarEntry entry = entries.nextElement();

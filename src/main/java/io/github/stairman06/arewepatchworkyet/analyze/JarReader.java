@@ -12,14 +12,14 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class JarReader {
-    public static void readDefinedMethods(JarFile jarFile) {
+    public static void readDefinedMethods(JarFile jarFile, boolean isForge) {
         for (JarEntry entry : Collections.list(jarFile.entries())) {
             if (entry.getName().endsWith(".class")) {
                 // class files
                 try {
                     InputStream inputStream = jarFile.getInputStream(entry);
                     ClassReader classReader = new ClassReader(inputStream);
-                    ClassVisitor cv = new BaseClassVisitor();
+                    ClassVisitor cv = new BaseClassVisitor(isForge);
 
                     classReader.accept(cv, 0);
                 } catch (Exception e) {
@@ -31,7 +31,7 @@ public class JarReader {
                     File tempFile = File.createTempFile("jij", "jij", new File("./temp"));
                     tempFile.delete();
                     Files.copy(jarFile.getInputStream(entry), tempFile.toPath());
-                    readDefinedMethods(new JarFile(tempFile));
+                    readDefinedMethods(new JarFile(tempFile), isForge);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

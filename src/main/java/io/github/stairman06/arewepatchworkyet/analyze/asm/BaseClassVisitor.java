@@ -21,8 +21,11 @@ public class BaseClassVisitor extends ClassVisitor {
     // This is because of Mixin methods, where methods will be applied to a different class then the one they're in
     private final ArrayList<String> classesToApply = new ArrayList<>();
 
-    public BaseClassVisitor() {
+    private final boolean isForge;
+
+    public BaseClassVisitor(boolean isForge) {
         super(Opcodes.ASM9);
+        this.isForge = isForge;
     }
 
     @Override
@@ -41,28 +44,51 @@ public class BaseClassVisitor extends ClassVisitor {
 
     private void addImplementedSet() {
         for (String className : classesToApply) {
-            Analyzer.implementedClassMembers.putIfAbsent(className, new HashSet<>());
+            if (isForge) {
+                Analyzer.forgeClassMembers.putIfAbsent(className, new HashSet<>());
+            } else {
+                Analyzer.implementedClassMembers.putIfAbsent(className, new HashSet<>());
+            }
         }
     }
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         classesToApply.add(name);
-        Analyzer.implementedClasses.add(name);
+
+        if (!isForge) {
+            Analyzer.implementedClasses.add(name);
+        }
+
         this.addImplementedSet();
 
-        HashSet<String> superSet = Analyzer.superCache.getOrDefault(name, new HashSet<>());
+        HashSet<String> superSet;
+        if (isForge) {
+            superSet = Analyzer.forgeSuperCache.getOrDefault(name, new HashSet<>());
+        } else {
+            superSet = Analyzer.superCache.getOrDefault(name, new HashSet<>());
+        }
+
         superSet.add(superName);
         superSet.addAll(Arrays.asList(interfaces));
 
-        Analyzer.superCache.put(name, superSet);
+        if (isForge) {
+            Analyzer.forgeSuperCache.put(name, superSet);
+        } else {
+            Analyzer.superCache.put(name, superSet);
+        }
+
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         for (String className : classesToApply) {
-            Analyzer.implementedClassMembers.get(className).add(new ClassMember(ClassMember.Type.METHOD, name, descriptor, className, null));
+            if (isForge) {
+                Analyzer.forgeClassMembers.get(className).add(new ClassMember(ClassMember.Type.METHOD, name, descriptor, className, null));
+            } else {
+                Analyzer.implementedClassMembers.get(className).add(new ClassMember(ClassMember.Type.METHOD, name, descriptor, className, null));
+            }
         }
 
         return super.visitMethod(access, name, descriptor, signature, exceptions);
@@ -71,7 +97,11 @@ public class BaseClassVisitor extends ClassVisitor {
     @Override
     public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
         for (String className : classesToApply) {
-            Analyzer.implementedClassMembers.get(className).add(new ClassMember(ClassMember.Type.FIELD, name, descriptor, className, null));
+            if (isForge) {
+                Analyzer.forgeClassMembers.get(className).add(new ClassMember(ClassMember.Type.FIELD, name, descriptor, className, null));
+            } else {
+                Analyzer.implementedClassMembers.get(className).add(new ClassMember(ClassMember.Type.FIELD, name, descriptor, className, null));
+            }
         }
         return super.visitField(access, name, descriptor, signature, value);
     }

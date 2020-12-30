@@ -2,6 +2,7 @@ package io.github.stairman06.arewepatchworkyet;
 
 import io.github.stairman06.arewepatchworkyet.analyze.Analyzer;
 import io.github.stairman06.arewepatchworkyet.analyze.ClassMember;
+import io.github.stairman06.arewepatchworkyet.forge.ForgeInstaller;
 import io.github.stairman06.arewepatchworkyet.mappings.MappingUtils;
 import io.github.stairman06.arewepatchworkyet.ui.ResultListItem;
 import io.github.stairman06.arewepatchworkyet.ui.ResultListItemCellRenderer;
@@ -17,7 +18,9 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeSet;
@@ -32,6 +35,7 @@ public class AreWePatchworkYetGui {
     private static JTextField apiJarTextField;
     private static JTextField resultSearchTextField;
     private static JPanel inspectionPanel;
+    private static JLabel resultAmount;
     private static DefaultListModel<ResultListItem> listModel = new DefaultListModel<>();
 
 
@@ -54,6 +58,11 @@ public class AreWePatchworkYetGui {
             new File("./temp").mkdirs();
             if (!Files.exists(Paths.get("./data"))) {
                 new File("./data").mkdirs();
+            }
+
+
+            if (!Files.exists(Paths.get("./data/mcpatched-intermediary.jar")) || !Files.exists(Paths.get("./data/forge-intermediary.jar"))) {
+                ForgeInstaller.installForge();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -162,9 +171,21 @@ public class AreWePatchworkYetGui {
 
                 analyzeButton.addActionListener(e -> {
                     try {
+                        Path inputPath = Paths.get(inputModTextField.getText());
+                        Path apiPath = Paths.get(apiJarTextField.getText());
+                        if (!inputPath.toFile().exists()) {
+                            JOptionPane.showMessageDialog(null, "You need to supply an input mod jar!", "Unable to analyze", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+
+                        if (!apiPath.toFile().exists()) {
+                            JOptionPane.showMessageDialog(null, "You need to supply a Patchwork API jar!", "Unable to analyze", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+
                         AreWePatchworkYet.start(
                                 (String) minecraftVersionBox.getSelectedItem(),
-                                Paths.get(inputModTextField.getText()),
+                                inputPath,
                                 Paths.get(apiJarTextField.getText())
                         );
                     } catch (Exception ex) {
@@ -193,6 +214,9 @@ public class AreWePatchworkYetGui {
                 infoPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
                 infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
                 infoPanel.add(new JLabel("These results may not be representative of the actual support."));
+
+                resultAmount = new JLabel("Click analyze to view results");
+                infoPanel.add(resultAmount);
 
                 resultSearchTextField = new JTextField("Search classes...", 30);
                 resultSearchTextField.addActionListener(e -> {
@@ -277,7 +301,7 @@ public class AreWePatchworkYetGui {
             }
         }
 
-        System.out.println("Result count: " + neededCount);
+        resultAmount.setText("Needed methods/fields: " + neededCount);
     }
 
     public static void inspectClass(String owner) {
@@ -290,10 +314,28 @@ public class AreWePatchworkYetGui {
 
     private static int addClassHierarchy(String className, int indentationLevel) {
         int ret = 0;
-        for (String superclass : Analyzer.superCache.getOrDefault(className, new HashSet<>())) {
+        HashSet<String> superCache;
+
+        HashMap<String, HashSet<String>> mergedSuperCache = Analyzer.superCache;
+        for (Map.Entry<String, HashSet<String>> entry : Analyzer.forgeSuperCache.entrySet()) {
+            if (mergedSuperCache.containsKey(entry.getKey())) {
+                mergedSuperCache.get(entry.getKey()).addAll(entry.getValue());
+            } else {
+                mergedSuperCache.put(entry.getKey(), entry.getValue());
+            }
+        }
+//
+//        if (className.startsWith("net/minecraftforge/")) {
+//            superCache = Analyzer.forgeSuperCache.getOrDefault(className, new HashSet<>());
+//        } else {
+//            superCache = Analyzer.superCache.getOrDefault(className, new HashSet<>());
+//        }
+
+        for (String superclass : mergedSuperCache.getOrDefault(className, new HashSet<>())) {
             if (!superclass.equals("java/lang/Object")) {
                 JLabel label = new JLabel(new String(new char[indentationLevel]).replace("\0", "    ") + "- " + MappingUtils.getClassName(superclass));
-                if (!Analyzer.isClassImplemented(superclass)) {
+
+                if (!Analyzer.isClassImplemented(superclass) || (Analyzer.superCache.get(superclass) != null && !Analyzer.superCache.get(className).contains(superclass))) {
                     label.setForeground(Color.RED);
                 }
                 inspectionPanel.add(label);
@@ -314,6 +356,9 @@ public class AreWePatchworkYetGui {
 
         {
             JLabel label = new JLabel(MappingUtils.getClassName(owner));
+            if (!Analyzer.isClassImplemented(owner)) {
+                label.setForeground(Color.RED);
+            }
             label.setFont(label.getFont().deriveFont(Font.BOLD));
             inspectionPanel.add(label);
         }
@@ -327,7 +372,7 @@ public class AreWePatchworkYetGui {
             int hierarchyAmount = addClassHierarchy(owner, 1);
 
             if (hierarchyAmount == 0) {
-                JLabel label = new JLabel("Unknown or nothing");
+                JLabel label = new JLabel("Nothing");
                 inspectionPanel.add(label);
             }
         }
@@ -386,7 +431,7 @@ public class AreWePatchworkYetGui {
 
         {
             if (newClassMember.caller != null) {
-                JLabel label = new JLabel(newClassMember.type == ClassMember.Type.METHOD ? "Called" : "Accessed" + " by: ");
+                JLabel label = new JLabel((newClassMember.type == ClassMember.Type.METHOD ? "Called" : "Accessed") + " by: ");
                 inspectionPanel.add(label);
 
                 JLabel label2 = new JLabel(MappingUtils.getClassName(newClassMember.caller));
@@ -415,7 +460,7 @@ public class AreWePatchworkYetGui {
             if (newClassMember.ownerClass.startsWith("net/minecraft/")) {
                 if (newClassMember.name.equals("<init>")) {
                     showImplementationTip("This looks like a Forge-added constructor. You'll need to redirect this to a custom class in Patcher.");
-                } else if (newClassMember.type == ClassMember.Type.METHOD ) {
+                } else if (newClassMember.type == ClassMember.Type.METHOD) {
                     showImplementationTip("It looks like Forge is adding a method to this Minecraft class. You'll need to create a duck interface, mixin to the Minecraft class, and implement the interface.");
                 } else if (newClassMember.type == ClassMember.Type.FIELD) {
                     // TODO: auto recognize public static fields
