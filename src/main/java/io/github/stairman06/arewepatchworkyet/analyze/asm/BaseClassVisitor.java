@@ -83,15 +83,15 @@ public class BaseClassVisitor extends ClassVisitor {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        for (String className : classesToApply) {
-            if (isForge) {
-                Analyzer.forgeClassMembers.get(className).add(new ClassMember(ClassMember.Type.METHOD, name, descriptor, className, null));
-            } else {
-                Analyzer.implementedClassMembers.get(className).add(new ClassMember(ClassMember.Type.METHOD, name, descriptor, className, null));
+        return new BaseMethodVisitor(super.visitMethod(access, name, descriptor, signature, exceptions), () -> {
+            for (String className : classesToApply) {
+                if (isForge) {
+                    Analyzer.forgeClassMembers.get(className).add(new ClassMember(ClassMember.Type.METHOD, name, descriptor, className, null));
+                } else {
+                    Analyzer.implementedClassMembers.get(className).add(new ClassMember(ClassMember.Type.METHOD, name, descriptor, className, null));
+                }
             }
-        }
-
-        return super.visitMethod(access, name, descriptor, signature, exceptions);
+        });
     }
 
     @Override
