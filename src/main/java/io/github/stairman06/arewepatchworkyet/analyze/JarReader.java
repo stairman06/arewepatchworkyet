@@ -12,7 +12,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class JarReader {
-    public static void readDefinedMethods(JarFile jarFile, boolean isForge) {
+    public static void readDefinedMethods(JarFile jarFile, boolean isForge, boolean isMod) {
         for (JarEntry entry : Collections.list(jarFile.entries())) {
             if (entry.getName().endsWith(".class")) {
                 // class files
@@ -31,10 +31,13 @@ public class JarReader {
                     File tempFile = File.createTempFile("jij", "jij", new File("./temp"));
                     tempFile.delete();
                     Files.copy(jarFile.getInputStream(entry), tempFile.toPath());
-                    readDefinedMethods(new JarFile(tempFile), isForge);
+                    readDefinedMethods(new JarFile(tempFile), isForge, isMod);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            } else if (entry.getName().endsWith(".js") && isMod) {
+                // JS Coremod Spotted!
+                Analyzer.addStat(Analyzer.Stat.JS_COREMOD);
             }
         }
     }

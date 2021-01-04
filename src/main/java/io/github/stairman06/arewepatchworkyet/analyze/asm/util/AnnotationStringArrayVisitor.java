@@ -21,7 +21,11 @@ public class AnnotationStringArrayVisitor extends AnnotationVisitor {
 
     @Override
     public void visit(String name, Object value) {
-        items.add(((Type) value).getClassName().replace('.', '/'));
+        try {
+            items.add(((Type) value).getClassName().replace('.', '/'));
+        } catch (Exception e) {
+            // Cannot be casted to Type for an unknown reason
+        }
         super.visit(name, value);
     }
 

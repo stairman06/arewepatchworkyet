@@ -39,6 +39,8 @@ public class Analyzer {
 
     public static HashMap<String, HashSet<String>> forgeSuperCache = new HashMap<>();
 
+    public static HashMap<Stat, Integer> statMap = new HashMap<>();
+
     /**
      * Analyze a class member, and add it to {@literal neededMethods} if needed.
      *
@@ -117,7 +119,7 @@ public class Analyzer {
      * @return true if the method exists
      */
     private static boolean checkIfClassMemberExists(ClassMember.Type type, String owner, String name, String descriptor) {
-        if (owner.equals("java/util/AbstractList") || owner.equals("java/util/List") || owner.equals("java/util/ArrayList")) {
+        if (owner.equals("java/util/AbstractList") || owner.equals("java/util/List") || owner.equals("java/util/ArrayList") || owner.equals("java/util/AbstractSet")) {
             if (name.equals("add") || name.equals("forEach") || name.equals("addAll") || name.equals("iterator") || name.equals("stream") || name.equals("isEmpty")) {
                 return true; // hacky handling for JDK classes
             }
@@ -185,5 +187,14 @@ public class Analyzer {
         }
 
         return implementedClasses.contains(clazz);
+    }
+
+    public enum Stat {
+        MIXIN,
+        JS_COREMOD
+    }
+
+    public static void addStat(Stat stat) {
+        statMap.put(stat, statMap.getOrDefault(stat, 0) + 1);
     }
 }

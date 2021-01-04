@@ -36,6 +36,7 @@ public class AreWePatchworkYetGui {
     private static JTextField resultSearchTextField;
     private static JPanel inspectionPanel;
     private static JLabel resultAmount;
+    private static JPanel statsPanel;
     private static DefaultListModel<ResultListItem> listModel = new DefaultListModel<>();
 
 
@@ -117,9 +118,14 @@ public class AreWePatchworkYetGui {
             {
                 JPanel modJarPanel = new JPanel();
                 modJarPanel.setLayout(new BoxLayout(modJarPanel, BoxLayout.X_AXIS));
-                inputModTextField = new JTextField(new File("./mod.jar").getPath(), 30);
+                File inputPath = new File("./input");
+                if (!inputPath.exists()) {
+                    inputPath.mkdirs();
+                }
 
-                modJarPanel.add(new JLabel("Input mod:"));
+                inputModTextField = new JTextField(inputPath.getPath(), 30);
+
+                modJarPanel.add(new JLabel("Input mod directory:"));
                 modJarPanel.add(inputModTextField);
                 modJarPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
                 configPanel.add(modJarPanel);
@@ -218,11 +224,18 @@ public class AreWePatchworkYetGui {
                 resultAmount = new JLabel("Click analyze to view results");
                 infoPanel.add(resultAmount);
 
+                JPanel statsPanel = new JPanel();
+                statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
+                infoPanel.add(statsPanel);
+                AreWePatchworkYetGui.statsPanel = statsPanel;
+
                 resultSearchTextField = new JTextField("Search classes...", 30);
                 resultSearchTextField.addActionListener(e -> {
                     renderNeededMethods(resultSearchTextField.getText());
                 });
                 infoPanel.add(resultSearchTextField);
+
+
 
                 resultsPanel.add(infoPanel);
             }
@@ -302,6 +315,27 @@ public class AreWePatchworkYetGui {
         }
 
         resultAmount.setText("Needed methods/fields: " + neededCount);
+
+
+        // statistics!
+        statsPanel.removeAll();
+        {
+            JLabel label = new JLabel("Statistics");
+            label.setFont(label.getFont().deriveFont(Font.BOLD));
+            statsPanel.add(label);
+        }
+
+        {
+            JLabel label = new JLabel("Mixins: " + Analyzer.statMap.getOrDefault(Analyzer.Stat.MIXIN, 0));
+            statsPanel.add(label);
+        }
+
+        {
+            JLabel label = new JLabel("JS Coremods: " + Analyzer.statMap.getOrDefault(Analyzer.Stat.JS_COREMOD, 0));
+            statsPanel.add(label);
+        }
+
+        statsPanel.updateUI();;
     }
 
     public static void inspectClass(String owner) {

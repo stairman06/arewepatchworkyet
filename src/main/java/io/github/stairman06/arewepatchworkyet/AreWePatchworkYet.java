@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,28 +37,30 @@ public class AreWePatchworkYet {
         LOGGER.info("Processing patched Minecraft and Forge Universal jars...");
         AreWePatchworkYet.processForge(Paths.get("./data/forge-intermediary.jar"), Paths.get("./data/mcpatched-intermediary.jar"));
 
-        LOGGER.info("Processing mod jar...");
-        AreWePatchworkYet.processModJar(new JarFile(modJarPath.toFile()));
-        
+        LOGGER.info("Processing mod jars...");
+        for (File file : modJarPath.toFile().listFiles()) {
+            AreWePatchworkYet.processModJar(new JarFile(file));
+        }
+
         AreWePatchworkYetGui.renderNeededMethods();
     }
 
     public static void processForge(Path forgeJarPath, Path patchedMcJarPath) throws Exception {
         JarFile forgeFile = new JarFile(forgeJarPath.toFile());
         JarFile mcFile = new JarFile(patchedMcJarPath.toFile());
-        JarReader.readDefinedMethods(forgeFile, true);
-        JarReader.readDefinedMethods(mcFile, true);
+        JarReader.readDefinedMethods(forgeFile, true, false);
+        JarReader.readDefinedMethods(mcFile, true, false);
     }
 
     public static void processLibs(Path minecraftJarPath, Path apiJarPath) throws Exception {
         JarFile mcFile = new JarFile(minecraftJarPath.toFile());
         JarFile patchworkFile = new JarFile(apiJarPath.toFile());
-        JarReader.readDefinedMethods(mcFile, false);
-        JarReader.readDefinedMethods(patchworkFile, false);
+        JarReader.readDefinedMethods(mcFile, false, false);
+        JarReader.readDefinedMethods(patchworkFile, false, false);
     }
 
     public static void processModJar(JarFile jarFile) throws Exception {
-        JarReader.readDefinedMethods(jarFile, false); // add defined classes
+        JarReader.readDefinedMethods(jarFile, false, true); // add defined classes
         Enumeration<JarEntry> entries = jarFile.entries();
         while (entries.hasMoreElements()) {
             JarEntry entry = entries.nextElement();
