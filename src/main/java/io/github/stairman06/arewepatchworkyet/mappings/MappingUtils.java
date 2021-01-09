@@ -109,4 +109,8 @@ public class MappingUtils {
 
         return rawDescriptor;
     }
+
+    public static String removeSubclassIfNeeded(String className) {
+        return className.split("\\$")[0];
+    }
 }

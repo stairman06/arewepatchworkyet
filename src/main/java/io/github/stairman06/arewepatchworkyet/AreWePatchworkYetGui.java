@@ -4,8 +4,10 @@ import io.github.stairman06.arewepatchworkyet.analyze.Analyzer;
 import io.github.stairman06.arewepatchworkyet.analyze.ClassMember;
 import io.github.stairman06.arewepatchworkyet.forge.ForgeInstaller;
 import io.github.stairman06.arewepatchworkyet.mappings.MappingUtils;
+import io.github.stairman06.arewepatchworkyet.ui.GitHubUtils;
 import io.github.stairman06.arewepatchworkyet.ui.ResultListItem;
 import io.github.stairman06.arewepatchworkyet.ui.ResultListItemCellRenderer;
+import jdk.nashorn.internal.scripts.JO;
 import net.fabricmc.mapping.tree.ClassDef;
 import net.fabricmc.mapping.tree.TinyTree;
 import org.apache.commons.io.FileUtils;
@@ -235,6 +237,15 @@ public class AreWePatchworkYetGui {
                 });
                 infoPanel.add(resultSearchTextField);
 
+                JButton exportButton = new JButton("Export to GitHub Issue");
+                exportButton.addActionListener(e -> {
+                    if (Analyzer.neededClassMembers.size() == 0) {
+                        JOptionPane.showMessageDialog(null, "You need to run analyze first!", "Nothing to export!", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    GitHubUtils.createRequiredFeaturesIssue();
+                });
+                infoPanel.add(exportButton);
 
 
                 resultsPanel.add(infoPanel);
@@ -423,16 +434,12 @@ public class AreWePatchworkYetGui {
         inspectionPanel.add(tipLabel);
     }
 
-    private static void openURI(String url) {
+    public static void openURI(String url) {
         try {
             Desktop.getDesktop().browse(new URI(url));
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private static String removeSubclassIfNeeded(String className) {
-        return className.split("\\$")[0];
     }
 
     public static void inspectClassMember(ClassMember newClassMember) {
@@ -477,7 +484,7 @@ public class AreWePatchworkYetGui {
             if (newClassMember.ownerClass.startsWith("net/minecraftforge/")) {
                 JButton viewYarnForge = new JButton("View source (YarnForge)");
                 viewYarnForge.addActionListener(e -> {
-                    openURI("https://github.com/PatchworkMC/YarnForge/blob/target-applied/src/main/java/" + removeSubclassIfNeeded(newClassMember.ownerClass) + ".java");
+                    openURI("https://github.com/PatchworkMC/YarnForge/blob/target-applied/src/main/java/" + MappingUtils.removeSubclassIfNeeded(newClassMember.ownerClass) + ".java");
                 });
 
                 inspectionPanel.add(viewYarnForge);
@@ -485,7 +492,7 @@ public class AreWePatchworkYetGui {
                 JButton viewForgeUpstream = new JButton("View source (Forge Upstream)");
                 viewForgeUpstream.addActionListener(e -> {
                     // TODO: un-hardcode 1.16.x
-                    openURI("https://github.com/MinecraftForge/MinecraftForge/blob/1.16.x/src/main/java/" + removeSubclassIfNeeded(newClassMember.ownerClass) + ".java");
+                    openURI("https://github.com/MinecraftForge/MinecraftForge/blob/1.16.x/src/main/java/" + MappingUtils.removeSubclassIfNeeded(newClassMember.ownerClass) + ".java");
                 });
 
                 inspectionPanel.add(viewForgeUpstream);
@@ -509,7 +516,7 @@ public class AreWePatchworkYetGui {
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
-                        openURI("https://github.com/PatchworkMC/YarnForge/blob/target-applied/patches/minecraft/" + removeSubclassIfNeeded(MappingUtils.getYarnClassName(newClassMember.ownerClass)) + ".java.patch");
+                        openURI("https://github.com/PatchworkMC/YarnForge/blob/target-applied/patches/minecraft/" + MappingUtils.removeSubclassIfNeeded(MappingUtils.getYarnClassName(newClassMember.ownerClass)) + ".java.patch");
                     });
 
                     inspectionPanel.add(viewYarnForgePatch);
