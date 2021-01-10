@@ -8,14 +8,8 @@ At the moment, prebuilt binaries are not available. You'll need to clone this re
 ```
 git clone https://github.com/stairman06/arewepatchworkyet.git
 cd arewepatchworkyet
-gradlew shadowJar
+gradlew run
 ```
-
-Once you have built it, run the jar: 
-```
-java -jar build/libs/AreWePatchworkYet-1.0-SNAPSHOT-all.jar
-```
-Make sure to include the `-all`, that means its the fat jar with all the libraries.
 
 ## Usage
 The leftmost panel is called the **Configuration Panel**. It's where you configure settings.

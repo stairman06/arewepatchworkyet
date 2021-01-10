@@ -5,6 +5,9 @@ import io.github.stairman06.arewepatchworkyet.analyze.Analyzer;
 import io.github.stairman06.arewepatchworkyet.analyze.ClassMember;
 import io.github.stairman06.arewepatchworkyet.mappings.MappingUtils;
 
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -50,7 +53,9 @@ public class GitHubUtils {
             }
         }
 
-        createApiIssue("Required features for [EDIT ME]", body.toString());
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(new StringSelection(body.toString()), null);
+        createApiIssue("Required features for [EDIT ME]", "[Contents are on your clipboard, please paste them]");
     }
 
     private static String escapeChars(String input) {
@@ -59,7 +64,7 @@ public class GitHubUtils {
 
     private static void createApiIssue(String title, String body) {
         try {
-            AreWePatchworkYetGui.openURI("https://github.com/PatchworkMC/patchwork-api/issues/new?labels=features+needed+for+mod&title=" + URLEncoder.encode(title, StandardCharsets.UTF_8.toString()) + "&body=" + URLEncoder.encode(body, StandardCharsets.UTF_8.toString()));
+            AreWePatchworkYetGui.openURI("https://github.com/PatchworkMC/patchwork-api/issues/new?title=" + URLEncoder.encode(title, StandardCharsets.UTF_8.toString()) + "&body=" + URLEncoder.encode(body, StandardCharsets.UTF_8.toString()));
         } catch (Exception e) {
             e.printStackTrace();
         }
